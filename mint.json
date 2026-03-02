@@ -1,0 +1,176 @@
+{
+  "$schema": "https://mintlify.com/schema.json",
+  "name": "ZendFi Documentation",
+  "logo": {
+    "dark": "/logo/dark.svg",
+    "light": "/logo/light.svg"
+  },
+  "favicon": "/favicon.svg",
+  "colors": {
+    "primary": "#667eea",
+    "light": "#818cf8",
+    "dark": "#4f46e5",
+    "anchors": {
+      "from": "#667eea",
+      "to": "#764ba2"
+    },
+    "background": {
+      "dark": "#0f0f17",
+      "light": "#ffffff"
+    }
+  },
+  "font": {
+    "headings": {
+      "family": "Inter",
+      "weight": 700
+    },
+    "body": {
+      "family": "Inter",
+      "weight": 400
+    }
+  },
+  "topbarLinks": [
+    {
+      "name": "API Status",
+      "url": "https://api.zendfi.tech/status"
+    }
+  ],
+  "topbarCtaButton": {
+    "name": "Dashboard",
+    "url": "https://dashboard.zendfi.tech"
+  },
+  "tabs": [
+    {
+      "name": "API Reference",
+      "url": "api-reference"
+    },
+    {
+      "name": "SDK",
+      "url": "sdk"
+    },
+    {
+      "name": "CLI",
+      "url": "cli"
+    },
+    {
+      "name": "Guides",
+      "url": "guides"
+    }
+  ],
+  "anchors": [
+    {
+      "name": "GitHub",
+      "icon": "github",
+      "url": "https://github.com/zendfi"
+    },
+    {
+      "name": "NPM",
+      "icon": "npm",
+      "url": "https://www.npmjs.com/package/@zendfi/sdk"
+    },
+    {
+      "name": "Community",
+      "icon": "discord",
+      "url": "https://discord.gg/zendfi"
+    }
+  ],
+  "navigation": [
+    {
+      "group": "Getting Started",
+      "pages": [
+        "introduction",
+        "quickstart",
+        "authentication",
+        "environments",
+        "architecture"
+      ]
+    },
+    {
+      "group": "Security",
+      "pages": [
+        "security/overview",
+        "security/api-keys",
+        "security/webhooks",
+        "security/best-practices"
+      ]
+    },
+    {
+      "group": "API Reference",
+      "pages": [
+        "api-reference/overview",
+        "api-reference/payments",
+        "api-reference/payment-intents",
+        "api-reference/payment-links",
+        "api-reference/subscriptions",
+        "api-reference/invoices",
+        "api-reference/installments",
+        "api-reference/splits",
+        "api-reference/webhooks",
+        "api-reference/customer-wallets",
+        "api-reference/session-keys",
+        "api-reference/api-keys"
+      ]
+    },
+    {
+      "group": "SDK",
+      "pages": [
+        "sdk/overview",
+        "sdk/client",
+        "sdk/types",
+        "sdk/errors",
+        "sdk/interceptors",
+        "sdk/webhook-handlers",
+        "sdk/embedded-checkout",
+        "sdk/helpers",
+        "sdk/configuration"
+      ]
+    },
+    {
+      "group": "CLI",
+      "pages": [
+        "cli/overview",
+        "cli/init",
+        "cli/payments",
+        "cli/keys",
+        "cli/webhooks",
+        "cli/advanced"
+      ]
+    },
+    {
+      "group": "Guides",
+      "pages": [
+        "guides/nextjs",
+        "guides/express",
+        "guides/embedded-checkout",
+        "guides/subscriptions",
+        "guides/payment-splits",
+        "guides/onramp"
+      ]
+    }
+  ],
+  "footerSocials": {
+    "x": "https://x.com/AltcoinBuzz_",
+    "github": "https://github.com/zendfi",
+    "discord": "https://discord.gg/zendfi"
+  },
+  "feedback": {
+    "thumbsRating": true,
+    "suggestEdit": true
+  },
+  "modeToggle": {
+    "default": "dark"
+  },
+  "seo": {
+    "indexHiddenPages": false
+  },
+  "js": "/custom.js",
+  "analytics": {},
+  "api": {
+    "baseUrl": "https://api.zendfi.tech",
+    "auth": {
+      "method": "bearer",
+      "name": "Authorization"
+    }
+  },
+  "openapi": []
+}
