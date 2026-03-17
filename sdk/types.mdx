@@ -125,6 +125,25 @@ interface CreatePaymentRequest {
 }
 ```
 
+### CustomerObject
+
+Pre-filled customer info attached to a payment link at creation time. When present, the checkout page skips the email / customer-info collection step and shows a **"Continue to Pay"** button instead. The link is automatically forced to `max_uses = 1`.
+
+```typescript
+interface CustomerObject {
+  email: string;
+  name?: string;
+  phone?: string;
+  company?: string;
+  billing_address_line1?: string;
+  billing_address_line2?: string;
+  billing_city?: string;
+  billing_state?: string;
+  billing_postal_code?: string;
+  billing_country?: string;    // ISO 3166-1 alpha-2
+}
+```
+
 ### CreatePaymentLinkRequest
 
 ```typescript
@@ -134,11 +153,19 @@ interface CreatePaymentLinkRequest {
   token?: string;
   description?: string;
   max_uses?: number;
-  expires_at?: string;          // ISO 8601
+  expires_at?: string;              // ISO 8601
   metadata?: Record<string, any>;
-  onramp?: boolean;             // enable fiat on-ramp
-  amount_ngn?: number;          // NGN amount for exact conversion
-  payer_service_charge?: boolean; // add service charge to payer
+  onramp?: boolean;                 // enable fiat on-ramp
+  amount_ngn?: number;              // NGN amount for exact conversion
+  payer_service_charge?: boolean;   // add service charge to payer
+  collect_customer_info?: boolean;  // show customer details form on checkout
+  /**
+   * Optional pre-filled customer.  When set:
+   *   - checkout skips the info-collection step ("Continue to Pay" CTA)
+   *   - max_uses is forced to 1 regardless of any supplied value
+   *   - customer data is forwarded straight into the onramp / payment flow
+   */
+  customer?: CustomerObject;
 }
 ```
 
@@ -195,8 +222,18 @@ interface CreateInvoiceRequest {
   token?: PaymentToken;
   description: string;
   line_items?: InvoiceLineItem[];
-  due_date?: string;            // ISO 8601
+  due_date?: string;                // ISO 8601
   metadata?: Record<string, any>;
+  /** Enable PAJ onramp (NGN bank transfer) on the payment link generated when this invoice is sent. */
+  onramp?: boolean;
+  /** Max times the generated payment link can be used. Defaults to 1 (single-customer invoice). */
+  payment_link_max_uses?: number;
+  /** Show a customer-details form on the checkout page before the payment step. */
+  collect_customer_info?: boolean;
+  /** Original NGN amount for exact PAJ onramp conversion. */
+  amount_ngn?: number;
+  /** When true, the PAJ service charge is billed to the payer instead of the merchant. */
+  payer_service_charge?: boolean;
 }
 ```
 
@@ -247,26 +284,30 @@ interface Payment {
 
 ```typescript
 interface PaymentLink {
+  id: string;
   link_code: string;
   merchant_id: string;
-  title?: string;
   description?: string;
   amount: number;
   currency: string;
-  payment_methods?: string[];
-  redirect_url?: string;
-  expires_at?: string;
-  metadata?: Record<string, any>;
+  token: string;
   payment_url: string;
   hosted_page_url: string;
-  url: string;            // alias for hosted_page_url
-  id?: string;
-  token?: string;
+  url: string;                  // alias for hosted_page_url
   max_uses?: number;
-  uses_count?: number;
-  is_active?: boolean;
-  onramp?: boolean;
-  payer_service_charge?: boolean;
+  uses_count: number;
+  expires_at?: string;
+  is_active: boolean;
+  onramp: boolean;
+  payer_service_charge: boolean;
+  /** Whether the checkout page collects full customer details before payment. */
+  collect_customer_info: boolean;
+  /**
+   * Present only on customer-scoped links (created with a `customer` object).
+   * Forwarded to the checkout and onramp flow so no manual input is needed.
+   */
+  customer_data?: CustomerObject;
+  metadata?: Record<string, any>;
   created_at: string;
   updated_at: string;
 }
@@ -278,18 +319,29 @@ interface PaymentLink {
 interface Invoice {
   id: string;
   invoice_number: string;
-  merchant_id: string;
   customer_email: string;
   customer_name?: string;
   amount_usd: number;
+  currency: string;
   token: PaymentToken;
   description: string;
-  line_items?: InvoiceLineItem[];
+  line_items: InvoiceLineItem[];
   status: InvoiceStatus;
   payment_url?: string;
   due_date?: string;
+  sent_at?: string;
+  paid_at?: string;
   created_at: string;
-  updated_at: string;
+  /** Whether the payment link uses the PAJ onramp flow. */
+  onramp: boolean;
+  /** Max-use cap on the generated payment link. */
+  payment_link_max_uses?: number;
+  /** Whether the checkout page collects full customer details before payment. */
+  collect_customer_info: boolean;
+  /** Whether the payer bears the PAJ service charge. */
+  payer_service_charge: boolean;
+  /** Original NGN amount set by the merchant for exact PAJ conversion. */
+  amount_ngn?: number;
 }
 ```
 

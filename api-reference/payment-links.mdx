@@ -42,26 +42,47 @@ POST /api/v1/payment-links
 </ParamField>
 
 <ParamField body="onramp" type="boolean" default="false">
-  Enable fiat onramp (NGN to USDC) for this link.
+  Enable fiat onramp (NGN to USDC) for this link. The checkout page will present a **Pay with Bank** option powered by the PAJ Ramp flow.
 </ParamField>
 
 <ParamField body="amount_ngn" type="number">
-  Original NGN amount for exact conversion. Only relevant when `onramp` is `true`.
+  Original NGN amount for exact PAJ conversion. Bypasses a live FX re-quote at checkout time. Only relevant when `onramp` is `true`.
 </ParamField>
 
 <ParamField body="payer_service_charge" type="boolean" default="false">
-  When `true` and `onramp` is `true`, a transparent service charge is added for the payer.
+  When `true` (and `onramp` is `true`), a transparent service charge — `max(₦30, ceil(amount_ngn × 2.5%))` — is added on top and billed to the payer rather than absorbed by the merchant.
 </ParamField>
 
 <ParamField body="collect_customer_info" type="boolean" default="false">
-  When `true`, the checkout shows an expanded form to collect customer details (name, phone, company, billing address) before payment.
+  When `true`, the checkout shows an expanded form to collect customer details (name, phone, company, billing address) before the payment step.
 </ParamField>
 
-### Example
+<ParamField body="customer" type="CustomerObject">
+  Optional pre-filled customer object. When present:
+
+  - The checkout page **skips** the email / customer-info collection step entirely and shows a single **"Continue to Pay"** button instead.
+  - The customer data is passed directly into the payment / onramp flow (no manual input required from the payer).
+  - `max_uses` is **automatically forced to `1`** — customer-scoped links are always single-use, regardless of any `max_uses` value supplied in the request.
+
+  | Field | Type | Description |
+  |-------|------|-------------|
+  | `email` | `string` **(required)** | Customer email address |
+  | `name` | `string` | Full name |
+  | `phone` | `string` | Phone number (e.g. `+2348012345678`) |
+  | `company` | `string` | Company / organisation name |
+  | `billing_address_line1` | `string` | Address line 1 |
+  | `billing_address_line2` | `string` | Address line 2 |
+  | `billing_city` | `string` | City |
+  | `billing_state` | `string` | State / province |
+  | `billing_postal_code` | `string` | Postal / ZIP code |
+  | `billing_country` | `string` | ISO 3166-1 alpha-2 country code (e.g. `NG`) |
+</ParamField>
+
+### Examples
 
 <CodeGroup>
 
-```bash cURL
+```bash cURL — standard link
 curl -X POST https://api.zendfi.tech/api/v1/payment-links \
   -H "Authorization: Bearer zfi_test_your_key" \
   -H "Content-Type: application/json" \
@@ -73,7 +94,26 @@ curl -X POST https://api.zendfi.tech/api/v1/payment-links \
   }'
 ```
 
-```typescript SDK
+```bash cURL — customer-scoped link
+curl -X POST https://api.zendfi.tech/api/v1/payment-links \
+  -H "Authorization: Bearer zfi_live_your_key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "amount": 49.00,
+    "description": "Order #1042 – Wireless Headphones",
+    "onramp": true,
+    "payer_service_charge": true,
+    "customer": {
+      "email": "ada@example.com",
+      "name": "Ada Lovelace",
+      "phone": "+2348012345678",
+      "billing_city": "Lagos",
+      "billing_country": "NG"
+    }
+  }'
+```
+
+```typescript SDK — standard link
 const link = await zendfi.createPaymentLink({
   amount: 25.00,
   description: 'Workshop Registration',
@@ -82,6 +122,27 @@ const link = await zendfi.createPaymentLink({
 });
 
 console.log(link.url); // https://checkout.zendfi.tech/checkout/abc123xyz
+```
+
+```typescript SDK — customer-scoped link
+const link = await zendfi.createPaymentLink({
+  amount: 49.00,
+  description: 'Order #1042 – Wireless Headphones',
+  onramp: true,
+  payer_service_charge: true,
+  // max_uses is automatically forced to 1
+  customer: {
+    email: 'ada@example.com',
+    name: 'Ada Lovelace',
+    phone: '+2348012345678',
+    billing_city: 'Lagos',
+    billing_country: 'NG',
+  },
+});
+
+console.log(link.max_uses);      // 1  (forced automatically)
+console.log(link.customer_data); // { email: 'ada@example.com', … }
+console.log(link.url);
 ```
 
 </CodeGroup>
@@ -104,6 +165,38 @@ console.log(link.url); // https://checkout.zendfi.tech/checkout/abc123xyz
   "is_active": true,
   "onramp": false,
   "payer_service_charge": false,
+  "collect_customer_info": false,
+  "customer_data": null,
+  "created_at": "2026-03-01T12:00:00Z"
+}
+```
+
+#### Response — customer-scoped link
+
+```json
+{
+  "id": "b2c3d4e5-f6a7-8901-bcde-f12345678901",
+  "link_code": "xyz789abc",
+  "description": "Order #1042 – Wireless Headphones",
+  "amount": 49.00,
+  "currency": "USD",
+  "token": "USDC",
+  "hosted_page_url": "https://checkout.zendfi.tech/checkout/xyz789abc",
+  "payment_url": "https://checkout.zendfi.tech/checkout/xyz789abc",
+  "max_uses": 1,
+  "uses_count": 0,
+  "expires_at": null,
+  "is_active": true,
+  "onramp": true,
+  "payer_service_charge": true,
+  "collect_customer_info": false,
+  "customer_data": {
+    "email": "ada@example.com",
+    "name": "Ada Lovelace",
+    "phone": "+2348012345678",
+    "billing_city": "Lagos",
+    "billing_country": "NG"
+  },
   "created_at": "2026-03-01T12:00:00Z"
 }
 ```
@@ -176,15 +269,47 @@ When this endpoint is called, it:
 
 ## Payment Links with Fiat Onramp
 
-When `onramp` is set to `true`, the checkout page shows a bank transfer option alongside crypto payment. Customers can pay with Nigerian Naira (NGN) which is converted to USDC and settled to your wallet.
+When `onramp` is set to `true`, the checkout page shows a **Pay with Bank** option. The customer transfers NGN via bank transfer, which is converted to USDC and settled directly to your wallet.
 
 ```typescript
 const link = await zendfi.createPaymentLink({
   amount: 25.00,
   description: 'Product Purchase',
   onramp: true,
-  payer_service_charge: true, // Add transparent service charge
+  payer_service_charge: true, // transparent fee added on top, billed to payer
 });
 ```
 
-See the [Fiat Onramp guide](/guides/onramp) for details on the onramp flow.
+See the [Fiat Onramp guide](/guides/onramp) for details on the full flow.
+
+---
+
+## Customer-Scoped Links (Single-Use)
+
+Pass a `customer` object when you already know who is paying — for example, when generating a link programmatically from an order management system or a checkout flow on your backend.
+
+```typescript
+const link = await zendfi.createPaymentLink({
+  amount: 120.00,
+  description: 'Subscription renewal — April 2026',
+  onramp: true,
+  customer: {
+    email: 'customer@example.com',
+    name: 'Emeka Obi',
+    phone: '+2349023456789',
+    billing_country: 'NG',
+  },
+});
+// link.max_uses === 1  (enforced automatically)
+```
+
+**Checkout behaviour when `customer` is present:**
+
+1. The hosted checkout page loads normally.
+2. Instead of showing the email / customer-info form it shows the customer's name and a **"Continue to Pay"** button.
+3. Clicking the button proceeds directly to the payment step (crypto wallet or PAJ onramp virtual account screen), with the customer details pre-populated.
+4. After the link is used once it is marked exhausted and cannot be opened again.
+
+<Note>
+  Because `max_uses` is locked to `1`, customer-scoped links are ideal for **invoice payment links**, **programmatic order links**, and any scenario where you need a one-time, identity-bound checkout URL.
+</Note>
