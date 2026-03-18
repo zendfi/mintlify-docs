@@ -1,22 +1,28 @@
 ---
 title: Payment Splits
-description: Distribute payments across multiple recipients automatically.
+description: Distribute payments across multiple recipients (crypto wallets or bank accounts) automatically.
 ---
 
 # Payment Splits
 
-Payment splits let you route portions of a payment to multiple wallets in a single transaction. Define recipients with either a percentage or a fixed amount, and ZendFi handles the on-chain distribution after the payment confirms.
+Payment splits let you route portions of a payment to multiple recipients in a single transaction. Recipients can be either crypto wallets (for on-chain distribution) or bank accounts (for direct bank deposits). Define each recipient with either a percentage or a fixed amount, and ZendFi handles the atomic distribution after the payment confirms.
 
-Splits are configured when creating a payment using the `split_recipients` field.
+Splits are configured when creating a **payment link** using the `split_recipients` field. All payment link features — onramp, customer collection, usage limits, expiration — are automatically inherited by split payments.
 
-## Configuring Splits
+<Note>
+Splits are applied at the payment level. When a payment is created from a link with splits, all split recipients are atomically added to the payment and processed sequentially after confirmation.
+</Note>
 
-When creating a payment, include the `split_recipients` array:
+---
+
+## Configuring Splits on Payment Links
+
+When creating a payment link, include the `split_recipients` array with your recipient definitions:
 
 <CodeGroup>
 
-```bash cURL
-curl -X POST https://api.zendfi.tech/api/v1/payments \
+```bash cURL — multi-wallet split
+curl -X POST https://api.zendfi.tech/api/v1/payment-links \
   -H "Authorization: Bearer zfi_test_your_key" \
   -H "Content-Type: application/json" \
   -d '{
@@ -24,15 +30,46 @@ curl -X POST https://api.zendfi.tech/api/v1/payments \
     "description": "Marketplace order",
     "split_recipients": [
       {
+        "recipient_type": "wallet",
         "recipient_wallet": "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU",
         "recipient_name": "Seller A",
-        "percentage": 70.0,
+        "percentage": 85.0,
         "split_order": 1
       },
       {
+        "recipient_type": "wallet",
         "recipient_wallet": "8yLYug3DX98e08UYKEqCe6kClieuqB84UB0TuKthBtV",
         "recipient_name": "Platform Fee",
-        "percentage": 30.0,
+        "percentage": 15.0,
+        "split_order": 2
+      }
+    ]
+  }'
+```
+
+```bash cURL — mixed wallet & bank split
+curl -X POST https://api.zendfi.tech/api/v1/payment-links \
+  -H "Authorization: Bearer zfi_test_your_key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "amount": 100.00,
+    "description": "Vendor payout",
+    "onramp": true,
+    "split_recipients": [
+      {
+        "recipient_type": "wallet",
+        "recipient_wallet": "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU",
+        "recipient_name": "Crypto payment",
+        "fixed_amount_usd": 60.00,
+        "split_order": 1
+      },
+      {
+        "recipient_type": "bank_account",
+        "recipient_account_name": "Acme Corp",
+        "recipient_bank_account": "1234567890",
+        "recipient_bank_id": "gt_bank",
+        "recipient_email": "payments@acme.com",
+        "fixed_amount_usd": 40.00,
         "split_order": 2
       }
     ]
@@ -40,20 +77,22 @@ curl -X POST https://api.zendfi.tech/api/v1/payments \
 ```
 
 ```typescript SDK
-const payment = await zendfi.createPayment({
+const link = await zendfi.createPaymentLink({
   amount: 100.00,
   description: 'Marketplace order',
   split_recipients: [
     {
+      recipient_type: 'wallet',
       recipient_wallet: '7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU',
       recipient_name: 'Seller A',
-      percentage: 70.0,
+      percentage: 85.0,
       split_order: 1,
     },
     {
+      recipient_type: 'wallet',
       recipient_wallet: '8yLYug3DX98e08UYKEqCe6kClieuqB84UB0TuKthBtV',
       recipient_name: 'Platform Fee',
-      percentage: 30.0,
+      percentage: 15.0,
       split_order: 2,
     },
   ],
@@ -62,18 +101,26 @@ const payment = await zendfi.createPayment({
 
 </CodeGroup>
 
-### Split Recipient Fields
+---
+
+## Split Recipient Fields
+
+<ParamField body="recipient_type" type="enum" required>
+  Type of recipient: `wallet` or `bank_account`.
+</ParamField>
+
+### For Wallet Recipients (`recipient_type: "wallet"`)
 
 <ParamField body="recipient_wallet" type="string" required>
-  Solana wallet address to receive funds.
+  Solana wallet address to receive on-chain funds.
 </ParamField>
 
 <ParamField body="recipient_name" type="string">
-  Human-readable label for the recipient.
+  Human-readable label for the recipient (e.g., "Seller A").
 </ParamField>
 
 <ParamField body="percentage" type="number">
-  Percentage of the payment to route (e.g., `70.0` for 70%). Use either `percentage` or `fixed_amount_usd`, not both.
+  Percentage of the payment amount (e.g., `85.0` for 85%). Use either `percentage` or `fixed_amount_usd`, not both.
 </ParamField>
 
 <ParamField body="fixed_amount_usd" type="number">
@@ -81,12 +128,106 @@ const payment = await zendfi.createPayment({
 </ParamField>
 
 <ParamField body="split_order" type="integer" default="0">
-  Order in which splits are processed.
+  Processing order for this split (lower numbers process first).
 </ParamField>
 
-<Warning>
-  When using percentages, all percentages across recipients must sum to **exactly 100%**. When using fixed amounts, the total must not exceed the payment amount.
-</Warning>
+### For Bank Account Recipients (`recipient_type: "bank_account"`)
+
+<ParamField body="recipient_account_name" type="string" required>
+  Account holder name as registered with their bank.
+</ParamField>
+
+<ParamField body="recipient_bank_account" type="string" required>
+  Bank account number.
+</ParamField>
+
+<ParamField body="recipient_bank_id" type="string" required>
+  Bank identifier code (e.g., `gt_bank` for GuarantyCo, `access_bank` for Access Bank).
+</ParamField>
+
+<ParamField body="recipient_email" type="string">
+  Email address for the recipient (optional, used for notifications).
+</ParamField>
+
+<ParamField body="percentage" type="number">
+  Percentage of the payment amount. Use either `percentage` or `fixed_amount_usd`, not both.
+</ParamField>
+
+<ParamField body="fixed_amount_usd" type="number">
+  Fixed dollar amount to route. Use either `percentage` or `fixed_amount_usd`, not both.
+</ParamField>
+
+<ParamField body="split_order" type="integer" default="0">
+  Processing order for this split.
+</ParamField>
+
+---
+
+## Validation & Processing
+
+When you create a payment link with splits:
+
+1. **Link Creation**: Split recipients are validated for:
+   - Correct structure and required fields
+   - No duplicate wallet addresses (for wallet type)
+   - No duplicate bank accounts (for bank type)
+   - Valid Solana addresses (for wallet type)
+
+2. **Payment Initiation**: When a customer creates a payment from a link with bank account splits:
+   - Each bank account is validated with PAJ to confirm it exists
+   - If validation fails, payment creation returns a `400 Bad Request` error
+   - Wallet-type recipients do not require pre-validation
+
+3. **Payment Confirmation**: After the customer's payment is confirmed on-chain:
+   - Wallet recipients: Funds transferred directly from merchant escrow to wallet
+   - Bank recipients: PAJ offramp order created with USDC sent to PAJ deposit address; PAJ converts and deposits to bank account
+
+---
+
+## Get Payment Link with Splits
+
+```
+GET /api/v1/payment-links/{link_id}
+```
+
+<ParamField path="link_id" type="string" required>
+  Payment link ID.
+</ParamField>
+
+### Response
+
+The response includes the full `split_recipients` array:
+
+```json
+{
+  "id": "link_abc123",
+  "amount": 100.00,
+  "currency": "USD",
+  "token": "USDC",
+  "description": "Marketplace order",
+  "status": "active",
+  "split_recipients": [
+    {
+      "recipient_type": "wallet",
+      "recipient_wallet": "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU",
+      "recipient_name": "Seller A",
+      "percentage": 85.0,
+      "fixed_amount_usd": null,
+      "split_order": 1
+    },
+    {
+      "recipient_type": "wallet",
+      "recipient_wallet": "8yLYug3DX98e08UYKEqCe6kClieuqB84UB0TuKthBtV",
+      "recipient_name": "Platform Fee",
+      "percentage": 15.0,
+      "fixed_amount_usd": null,
+      "split_order": 2
+    }
+  ],
+  "created_at": "2026-03-01T10:00:00Z",
+  "updated_at": "2026-03-01T10:00:00Z"
+}
+```
 
 ---
 
@@ -96,7 +237,7 @@ const payment = await zendfi.createPayment({
 GET /api/v1/payments/{payment_id}/splits
 ```
 
-Returns all split records for a given payment.
+Returns all splits associated with a payment, including settlement status.
 
 <ParamField path="payment_id" type="string" required>
   Payment ID.
@@ -111,13 +252,13 @@ Returns all split records for a given payment.
     "payment_id": "pay_test_xyz789",
     "recipient_wallet": "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU",
     "recipient_name": "Seller A",
-    "percentage": 70.0,
+    "percentage": 85.0,
     "fixed_amount_usd": null,
     "split_order": 1,
     "status": "completed",
     "transaction_signature": "5UfDu...kXy",
-    "settled_amount_usd": 70.00,
-    "settled_amount_crypto": 70.00,
+    "settled_amount_usd": 85.00,
+    "settled_amount_crypto": 85.00,
     "settled_currency": "USDC",
     "settled_at": "2026-03-01T12:05:00Z",
     "failure_reason": null,
@@ -130,13 +271,13 @@ Returns all split records for a given payment.
     "payment_id": "pay_test_xyz789",
     "recipient_wallet": "8yLYug3DX98e08UYKEqCe6kClieuqB84UB0TuKthBtV",
     "recipient_name": "Platform Fee",
-    "percentage": 30.0,
+    "percentage": 15.0,
     "fixed_amount_usd": null,
     "split_order": 2,
     "status": "completed",
     "transaction_signature": "3RmEp...qWz",
-    "settled_amount_usd": 30.00,
-    "settled_amount_crypto": 30.00,
+    "settled_amount_usd": 15.00,
+    "settled_amount_crypto": 15.00,
     "settled_currency": "USDC",
     "settled_at": "2026-03-01T12:05:02Z",
     "failure_reason": null,
@@ -165,35 +306,147 @@ GET /api/v1/splits/{split_id}
 
 ```mermaid
 stateDiagram-v2
-    [*] --> pending: Payment created with splits
-    pending --> processing: Payment confirmed
-    processing --> completed: On-chain transfer succeeded
-    processing --> failed: Transfer failed
-    failed --> processing: Retry
+    [*] --> pending: Payment link created with splits
+    pending --> processing: Payment confirmed on-chain
+    processing --> completed: Split settled (wallet or bank)
+    processing --> failed: Settlement failed
+    failed --> processing: Retry attempt
     completed --> [*]
 ```
 
 | Status | Description |
 |--------|-------------|
-| `pending` | Split created, awaiting payment confirmation |
-| `processing` | Payment confirmed, on-chain transfer in progress |
-| `completed` | Funds successfully delivered to recipient |
-| `failed` | Transfer failed, may be retried |
+| `pending` | Split created with payment link, awaiting payment confirmation |
+| `processing` | Payment confirmed, settlement in progress |
+| `completed` | Funds successfully settled (on-chain or bank deposit) |
+| `failed` | Settlement failed, may be retried |
 | `refunded` | Split was refunded |
+
+---
+
+## Recipient Type Behavior
+
+### Wallet Recipients
+
+- **Settlement**: Direct on-chain transfer from merchant escrow to recipient wallet
+- **Speed**: Immediate (settlement upon payment confirmation)
+- **Token**: Inherits payment link token (USDC, USDT, or SOL)
+- **Validation**: Solana address format verified at link creation
+- **Confirmation**: On-chain transaction signature returned
+
+### Bank Account Recipients
+
+- **Settlement**: PAJ offramp (USDC → NGN → bank deposit)
+- **Speed**: Asynchronous (PAJ converts and deposits within minutes to hours)
+- **Token**: USDC only (converted to fiat by PAJ)
+- **Validation**: Bank account verified with PAJ at payment creation
+- **Confirmation**: PAJ order ID and on-chain deposit signature returned
+
+---
+
+## Validation Rules
+
+### Split Configuration Validation
+
+<Warning>
+The following rules are enforced at payment link creation:
+
+- At least one split recipient must be defined
+- No duplicate wallet addresses (for wallet type)
+- No duplicate bank accounts (for bank type)
+- Each recipient must have exactly one of: `percentage` or `fixed_amount_usd`
+- Wallet-type recipients must have `recipient_wallet` field
+- Bank-type recipients must have `recipient_account_name`, `recipient_bank_account`, and `recipient_bank_id`
+</Warning>
+
+### Amount Validation
+
+- **Percentage-based**: Sum of all percentages across wallet+bank recipients must **equal 100%**
+- **Fixed-amount-based**: Total of all fixed amounts must **not exceed** the payment amount
+- **Mixed**: When mixing percentages and fixed amounts, percentages are calculated first, then fixed amounts are deducted from the remainder
+
+### Bank Account Validation (Payment Time)
+
+When a customer initiates payment with bank account splits:
+
+- Each bank account is validated with PAJ
+- If validation fails, payment creation returns `400 Bad Request` with error details
+- Validation confirms:
+  - Account exists
+  - Account is active
+  - Account holder name matches (or is similar to) the provided name
+
+---
 
 ## Use Cases
 
 <CardGroup cols={2}>
-  <Card title="Marketplace" icon="shop">
-    Route the seller's share and your platform fee in a single payment.
+  <Card title="Marketplace Payments" icon="shop">
+    Route seller commission, platform fee, and service tax in a single checkout. Supports both crypto wallets and bank payouts.
   </Card>
   <Card title="Revenue Sharing" icon="chart-pie">
-    Automatically distribute royalties or commissions to partners.
+    Automatically distribute royalties, affiliate commissions, or revenue splits across multiple partners with a single unified payment.
   </Card>
-  <Card title="Multi-vendor Orders" icon="users">
-    Split a single checkout across multiple suppliers.
+  <Card title="Multi-Vendor Orders" icon="people">
+    Accept one payment from a customer and atomically split across multiple supplier bank accounts and crypto wallets.
   </Card>
-  <Card title="Tip + Service" icon="hand-holding-dollar">
-    Separate the base payment from gratuities or service fees.
+  <Card title="Tiered Payouts" icon="layer-group">
+    Create flexible payout tiers: platform retains percentage, send fixed amount to supplier, route remainder to sub-contractor.
+  </Card>
+  <Card title="NGN Bank Integration" icon="landmark">
+    Route USDC payments directly to Nigerian bank accounts via PAJ, eliminating manual reconciliation for bank-account recipients.
+  </Card>
+  <Card title="Onramp + Splits" icon="arrow-up-right-dots">
+    Combine onramp (fiat-to-crypto) with splits to accept bank transfers from anywhere and automatically distribute globally.
   </Card>
 </CardGroup>
+
+---
+
+## Error Handling
+
+Split validation errors occur at two stages:
+
+### Link Creation Errors
+
+```json
+{
+  "error": "invalid_split_configuration",
+  "message": "Split percentages exceed 100%: 105.00%",
+  "status": 400
+}
+```
+
+Common link creation errors:
+- Duplicate wallet addresses
+- Invalid Solana address format
+- Missing required bank fields
+- Percentage sum exceeds 100%
+
+### Payment Creation Errors
+
+```json
+{
+  "error": "bank_account_validation_failed",
+  "message": "Bank account 1234567890 not found for bank gt_bank",
+  "status": 400
+}
+```
+
+Common payment creation errors:
+- Bank account does not exist
+- Account name mismatch
+- Invalid bank ID
+
+---
+
+## Retry Logic
+
+Splits use automatic retry for transient failures:
+
+- **Wallet transfers**: Up to 3 retry attempts on blockchain failures
+- **Bank transfers**: Up to 3 retry attempts on PAJ integration failures
+- **Retry interval**: Exponential backoff starting at 5 minutes
+- **Max retry time**: Splits are marked failed after 3 attempts
+
+When a split fails permanently, the merchant receives an email notification with failure details.

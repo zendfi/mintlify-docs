@@ -110,6 +110,58 @@ console.log(link.hosted_page_url); // same URL
 console.log(link.collect_customer_info); // true
 ```
 
+#### With payment splits (wallet recipients)
+
+Automatically distribute payments across multiple wallets:
+
+```typescript
+const link = await zendfi.createPaymentLink({
+  amount: 100.00,
+  description: 'Marketplace Purchase – 3-way split',
+  split_recipients: [
+    { recipient_wallet: '7xKXt...', percentage: 60, recipient_name: 'Seller' },
+    { recipient_wallet: '8yLYu...', percentage: 30, recipient_name: 'Platform' },
+    { recipient_wallet: '9zMZv...', percentage: 10, recipient_name: 'Referrer' },
+  ],
+});
+
+console.log(link.url);
+console.log(link.split_recipients); // array with full split details
+```
+
+#### With payment splits (bank account recipients)
+
+Enable NGN bank deposits via PAJ bank account integration:
+
+```typescript
+const link = await zendfi.createPaymentLink({
+  amount: 500.00,
+  description: 'Contractor Payment – Direct to Bank',
+  onramp: true,
+  split_recipients: [
+    {
+      recipient_type: 'bank_account',
+      percentage: 70,
+      recipient_account_name: 'John Okonkwo',
+      recipient_bank_account: '0123456789',
+      recipient_bank_id: 'GTB',   // Guaranty Trust Bank
+      recipient_email: 'john@contractor.com',
+    },
+    {
+      recipient_type: 'wallet',
+      recipient_wallet: '7xKXt...',
+      percentage: 30,
+      recipient_name: 'Agent',
+    },
+  ],
+});
+
+console.log(link.url);
+// When paid:
+// – 70% (₦...) USDC → PAJ → John's GTB account
+// – 30% direct blockchain transfer to agent wallet
+```
+
 #### With a pre-filled customer object
 
 When you supply a `customer` object the checkout page skips the email / info
@@ -137,8 +189,6 @@ console.log(link.max_uses);     // 1  (forced automatically)
 console.log(link.customer_data); // { email: 'ada@example.com', name: 'Ada Lovelace', … }
 console.log(link.url);
 ```
-
-### getPaymentLink
 
 ```typescript
 const link = await zendfi.getPaymentLink('link_code_here');
