@@ -48,7 +48,7 @@ At creation time, ZendFi performs:
 Possible outcomes:
 
 - **Allow**: payment is created normally
-- **Allow with review**: payment is created and marked `flagged_for_review`
+- **Allow with review**: payment is created with a manual-review marker
 - **Block**: request is rejected before payment creation
 
 ### Stage 2: Checkout transaction build
@@ -91,10 +91,9 @@ ZendFi sanctions controls include:
 - Keep daily refresh enabled.
 - Enable strict startup mode once your approved seed list is operational.
 
-Environment controls:
-
-- `OFAC_SOL_SEED_LIST_JSON`: compliance-approved JSON list of sanctioned Solana addresses
-- `OFAC_REQUIRE_SEED_LIST`: when `true`, startup fails if no valid seed list is loaded
+<Note>
+Sanctions list lifecycle and startup hardening controls are managed by ZendFi platform operations. Merchants do not need to configure OFAC environment variables in their integrations.
+</Note>
 
 ## Merchant Best Practices
 
@@ -121,9 +120,7 @@ Suggested support message:
 ## Operational Checklist
 
 - Monitor blocked and flagged payment rates.
-- Track sanctions list refresh status and freshness.
 - Review recurring blocked wallets and IPs for abuse patterns.
-- Audit manual overrides and unblock actions.
 - Re-tune thresholds using observed false-positive and fraud-loss rates.
 
 ## Need Help?
@@ -133,4 +130,3 @@ If your team needs help tuning fraud controls or compliance rollout, contact sup
 - payment IDs affected
 - timestamps and environment (`test` or `live`)
 - expected customer behavior vs observed outcome
-- whether sanctions seed mode is enabled

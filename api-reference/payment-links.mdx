@@ -55,15 +55,6 @@ POST /api/v1/payment-links
 
 
 <ParamField body="collect_customer_info" type="boolean" default="false">
-  Whether checkout should natively collect extended customer information (like phone and billing address) before payment.
-</ParamField>
-
-<ParamField body="customer" type="object">
-  Optional pre-filled customer identity payload containing fields like `email`, `name`, `phone`, and `billing_address`. When provided:
-  - Bypasses step 1 (email / manual info collection) on the checkout UI.
-  - Automatically overrides the link to have `max_uses = 1` for security constraints.
-</ParamField>
-<ParamField body="collect_customer_info" type="boolean" default="false">
   When `true`, the checkout shows an expanded form to collect customer details (name, phone, company, billing address) before the payment step.
 </ParamField>
 
@@ -346,7 +337,6 @@ If a payment is blocked or held for review, show neutral language:
 Avoid showing internal fraud rule details or threshold values in customer-facing UI.
 
 For full policy and operations guidance, see [Fraud and Compliance](/security/fraud-and-compliance).
-4. After the link is used once it is marked exhausted and cannot be opened again.
 
 <Note>
   Because `max_uses` is locked to `1`, customer-scoped links are ideal for **invoice payment links**, **programmatic order links**, and any scenario where you need a one-time, identity-bound checkout URL.

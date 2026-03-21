@@ -70,10 +70,8 @@ POST /api/v1/payments/{payment_id}/submit-transaction
 
 Submission applies:
 
-- stored fraud-score gate (`>= 75`)
+- stored fraud-score gate
 - submit-time fraud re-check when `customer_wallet` is present
-
-If submit-time fraud re-check fails internally, stored-score gating still applies.
 
 | Status | When it happens |
 |---|---|
@@ -117,11 +115,10 @@ Recommended customer-safe response copy:
 
 Avoid exposing internal fraud signals or threshold details in user-facing UI.
 
-## Precision Notes
+## Notes
 
 1. Current sanctions enforcement is at create-payment and build-transaction stages.
-2. Current submit-stage enforcement is fraud-based (not sanctions-based).
-3. Some blocked responses in build/submit paths are status-only (`403`) without a structured JSON error body.
+2. Current submit-stage enforcement is fraud-based.
 
 ## Related Docs
 
