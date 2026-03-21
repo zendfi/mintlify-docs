@@ -89,6 +89,7 @@
       "group": "Security",
       "pages": [
         "security/overview",
+        "security/fraud-and-compliance",
         "security/api-keys",
         "security/webhooks",
         "security/best-practices"
@@ -99,6 +100,7 @@
       "pages": [
         "api-reference/overview",
         "api-reference/payments",
+        "api-reference/fraud-controls",
         "api-reference/payment-intents",
         "api-reference/payment-links",
         "api-reference/subscriptions",

@@ -1,0 +1,130 @@
+---
+title: Fraud Controls
+description: Endpoint-level fraud and sanctions behavior, status codes, and integration guidance.
+---
+
+# Fraud Controls API Behavior
+
+This page documents how ZendFi fraud and sanctions controls appear at the API layer so your integration can handle risk outcomes deterministically.
+
+For customer-facing policy and operations, see [Fraud and Compliance](/security/fraud-and-compliance).
+
+## Enforcement Stages
+
+ZendFi evaluates risk in multiple request stages:
+
+1. **Payment creation** (`POST /api/v1/payments`)
+2. **Checkout transaction build** (`POST /api/v1/payments/{payment_id}/build-transaction`)
+3. **Transaction submission**
+4. `POST /api/v1/payments/{payment_id}/submit-transaction`
+5. `POST /api/v1/payments/{payment_id}/submit-gasless-transaction`
+
+## Endpoint Response Matrix
+
+### Create Payment
+
+```
+POST /api/v1/payments
+```
+
+At this stage, ZendFi enforces:
+
+- merchant-wallet sanctions screening
+- blocked-IP screening
+- pre-create fraud scoring
+
+Hard blocks happen before payment insertion.
+
+| Status | When it happens | Typical payload shape |
+|---|---|---|
+| `200` | Payment created | Payment object |
+| `402` | Blocked by sanctions/blocked-IP/fraud policy | `{ "error": { "code": "payment_blocked", ... } }` |
+| `400` | Validation error | `{ "error": { "field": "...", ... } }` |
+| `429` | Merchant limits/rate controls | Limit/usage error payload |
+
+### Build Transaction
+
+```
+POST /api/v1/payments/{payment_id}/build-transaction
+```
+
+At this stage, ZendFi enforces:
+
+- customer-wallet sanctions screening
+- fraud check with payer wallet and request IP (when available)
+- customer wallet binding to payment (wallet mismatch returns conflict)
+
+| Status | When it happens |
+|---|---|
+| `200` | Transaction build succeeds |
+| `403` | Blocked by sanctions or fraud policy |
+| `404` | Payment not found |
+| `409` | Payment no longer eligible for build (state conflict) |
+| `410` | Payment expired |
+
+### Submit Transaction (standard)
+
+```
+POST /api/v1/payments/{payment_id}/submit-transaction
+```
+
+Submission applies:
+
+- stored fraud-score gate (`>= 75`)
+- submit-time fraud re-check when `customer_wallet` is present
+
+If submit-time fraud re-check fails internally, stored-score gating still applies.
+
+| Status | When it happens |
+|---|---|
+| `200` | Submission accepted for verification |
+| `400` | Invalid signature payload |
+| `403` | Blocked by fraud score/re-check policy |
+| `404` | Payment not found |
+| `409` | Signature conflict/replay or invalid payment state |
+| `410` | Payment expired |
+
+### Submit Gasless Transaction
+
+```
+POST /api/v1/payments/{payment_id}/submit-gasless-transaction
+```
+
+Uses the same risk gate model as standard submission.
+
+| Status | When it happens |
+|---|---|
+| `200` | Submission accepted |
+| `400` | Invalid gasless transaction payload |
+| `403` | Blocked by fraud score/re-check policy |
+| `404` | Payment not found |
+| `409` | Signature/state conflict |
+| `410` | Payment expired |
+
+## Integration Recommendations
+
+1. Treat `payment_blocked`, `403`, and `402` as security outcomes, not generic failures.
+2. Show user-safe copy and route users to support with payment ID.
+3. Do not auto-retry blocked requests without additional customer verification.
+4. Log payment ID, endpoint, status code, and request correlation data for support triage.
+5. Use idempotency keys on write paths to avoid duplicate operations during retries.
+
+## Safe Client Messaging
+
+Recommended customer-safe response copy:
+
+> "Your payment needs additional security review. Please contact support with your payment ID."
+
+Avoid exposing internal fraud signals or threshold details in user-facing UI.
+
+## Precision Notes
+
+1. Current sanctions enforcement is at create-payment and build-transaction stages.
+2. Current submit-stage enforcement is fraud-based (not sanctions-based).
+3. Some blocked responses in build/submit paths are status-only (`403`) without a structured JSON error body.
+
+## Related Docs
+
+- [Payments](/api-reference/payments)
+- [Payment Links](/api-reference/payment-links)
+- [Fraud and Compliance](/security/fraud-and-compliance)

@@ -318,6 +318,34 @@ const link = await zendfi.createPaymentLink({
 1. The hosted checkout page loads normally.
 2. Instead of showing the email / customer-info form it shows the customer's name and a **"Continue to Pay"** button.
 3. Clicking the button proceeds directly to the payment step (crypto wallet or PAJ onramp virtual account screen), with the customer details pre-populated.
+
+---
+
+## Trust and Safety on Hosted Checkout
+
+Hosted checkout includes security controls designed to protect both merchants and customers:
+
+1. **Risk-based payment checks** are applied during payment creation, transaction build, and submission.
+2. **Sanctions screening** is applied during create-payment and transaction-build checkpoints.
+3. **Submission-time fraud gates** prevent stale-risk bypasses after initial checkout steps.
+
+### What customers may see
+
+Depending on risk outcomes, customers may experience:
+
+- normal payment flow
+- temporary hold / additional review requirement
+- blocked payment attempt
+
+### Recommended merchant UX copy
+
+If a payment is blocked or held for review, show neutral language:
+
+> "Your payment requires additional security review. Please contact support with your payment ID."
+
+Avoid showing internal fraud rule details or threshold values in customer-facing UI.
+
+For full policy and operations guidance, see [Fraud and Compliance](/security/fraud-and-compliance).
 4. After the link is used once it is marked exhausted and cannot be opened again.
 
 <Note>
