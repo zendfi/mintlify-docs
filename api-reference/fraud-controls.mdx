@@ -107,6 +107,62 @@ Uses the same risk gate model as standard submission.
 4. Log payment ID, endpoint, status code, and request correlation data for support triage.
 5. Use idempotency keys on write paths to avoid duplicate operations during retries.
 
+## Merchant Fraud Endpoints
+
+ZendFi provides merchant-scoped fraud read APIs under authenticated dashboard/session routes.
+
+### List Fraud Flags
+
+```
+GET /api/v1/merchants/me/fraud/flags
+```
+
+Query parameters:
+
+- `resolved` (`true`/`false`) optional
+- `severity` (`low`, `medium`, `high`, `critical`) optional
+- `resolution_type` (`safe_false_positive`, `confirmed_fraud`, `other`) optional
+- `page` (default `1`)
+- `limit` (default `25`, max `100`)
+
+Response includes merchant-owned fraud flags with pagination metadata.
+
+### Merchant Fraud Stats
+
+```
+GET /api/v1/merchants/me/fraud/stats
+```
+
+Response fields include:
+
+- `total_flagged`
+- `unresolved_flags`
+- `resolved_safe_flags`
+- `blocked_payments`
+- `false_positive_rate`
+- `estimated_fraud_prevented_usd`
+- `high_risk_payments_24h`
+- `average_fraud_score_24h`
+
+Formula definitions:
+
+- `false_positive_rate = resolved_safe_flags / total_flagged`
+- `estimated_fraud_prevented_usd = sum(amount_usd) of fraud-blocked payments`
+
+## Webhook Event: FraudFlagRaised
+
+When a payment fraud score is **greater than 50**, ZendFi emits an additional webhook event:
+
+- `fraud_flag_raised`
+
+The payload follows the standard payment webhook shape and includes payment metadata fields such as:
+
+- `metadata.fraud_score`
+- `metadata.fraud_flags`
+- `metadata.fraud_review_required`
+
+This event is emitted in addition to `payment_created`.
+
 ## Safe Client Messaging
 
 Recommended customer-safe response copy:
