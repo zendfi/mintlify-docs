@@ -100,6 +100,8 @@
       "pages": [
         "api-reference/overview",
         "api-reference/payments",
+        "api-reference/refunds",
+        "api-reference/disputes",
         "api-reference/fraud-controls",
         "api-reference/payment-intents",
         "api-reference/payment-links",

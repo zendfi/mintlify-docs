@@ -1,0 +1,162 @@
+---
+title: Disputes
+description: Public dispute intake and merchant/admin dispute resolution APIs.
+---
+
+# Disputes
+
+ZendFi supports a customer-to-merchant dispute flow with optional admin resolution.
+
+## 1) Request Dispute OTP (Public)
+
+```
+POST /api/v1/payments/{payment_id}/dispute/request-otp
+```
+
+Requests an email OTP used to verify customer ownership before dispute creation.
+
+### Request Body
+
+<ParamField body="customer_email" type="string" required>
+  Customer email associated with the payment.
+</ParamField>
+
+### Response
+
+```json
+{
+  "payment_id": "0f1b6f0b-02ef-4fd4-bf31-a89f2fb52f54",
+  "customer_email": "customer@example.com",
+  "expires_at": "2026-03-22T10:31:15.871Z"
+}
+```
+
+## 2) Create Dispute (Public)
+
+```
+POST /api/v1/payments/{payment_id}/dispute
+```
+
+Creates a dispute after customer verification.
+
+### Request Body
+
+<ParamField body="customer_email" type="string" required>
+  Customer email for identity matching and OTP validation.
+</ParamField>
+
+<ParamField body="customer_wallet" type="string">
+  Optional customer wallet used as alternate ownership proof.
+</ParamField>
+
+<ParamField body="dispute_type" type="string" required>
+  One of: `duplicate`, `unauthorized`, `product_not_received`, `other`.
+</ParamField>
+
+<ParamField body="description" type="string" required>
+  Customer dispute description.
+</ParamField>
+
+<ParamField body="evidence" type="object">
+  Optional evidence object.
+</ParamField>
+
+<ParamField body="otp_code" type="string" required>
+  OTP from the request-otp step.
+</ParamField>
+
+## 3) List Merchant Disputes
+
+```
+GET /api/v1/merchants/me/disputes
+```
+
+Session-authenticated merchant endpoint.
+
+### Query Parameters
+
+- `limit` (default `50`, max `100`)
+- `offset` (default `0`)
+- `status` (`open`, `under_review`, `resolved_merchant_favor`, `resolved_customer_favor`, `closed`)
+- `dispute_type` (`duplicate`, `unauthorized`, `product_not_received`, `other`)
+- `start_date` and `end_date`
+
+## 4) Get Dispute Detail
+
+```
+GET /api/v1/merchants/me/disputes/{id}
+```
+
+## 5) Merchant Respond to Dispute
+
+```
+POST /api/v1/merchants/me/disputes/{id}/respond
+```
+
+### Request Body
+
+<ParamField body="response" type="string" required>
+  Merchant response text.
+</ParamField>
+
+<ParamField body="evidence" type="object">
+  Optional structured evidence payload.
+</ParamField>
+
+## 6) Merchant Issue Refund From Dispute
+
+```
+POST /api/v1/merchants/me/disputes/{id}/issue-refund
+```
+
+Creates a linked refund through the refunds system and resolves dispute to customer favor.
+
+### Request Body
+
+<ParamField body="amount_usd" type="number" required>
+  Refund amount to issue.
+</ParamField>
+
+<ParamField body="refund_reason" type="string">
+  Refund reason.
+</ParamField>
+
+<ParamField body="metadata" type="object">
+  Optional metadata forwarded to the refund request.
+</ParamField>
+
+## 7) Admin Resolve Dispute
+
+```
+POST /admin/disputes/{id}/resolve
+```
+
+Admin-authenticated endpoint for final resolution.
+
+### Request Body
+
+<ParamField body="outcome" type="string" required>
+  `merchant_favor`, `customer_favor`, or `closed`.
+</ParamField>
+
+<ParamField body="resolution_notes" type="string">
+  Optional admin notes.
+</ParamField>
+
+## Dispute Statuses
+
+| Status | Meaning |
+|---|---|
+| `open` | Dispute created, pending merchant action |
+| `under_review` | Merchant responded / evidence review in progress |
+| `resolved_merchant_favor` | Final decision in merchant favor |
+| `resolved_customer_favor` | Final decision in customer favor |
+| `closed` | Dispute closed without favor designation |
+
+## Dispute Lifecycle Events
+
+- `DisputeOpened`
+- `DisputeResponded`
+- `DisputeResolved`
+
+See [Webhooks](/api-reference/webhooks).

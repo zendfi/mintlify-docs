@@ -41,6 +41,24 @@ All events your webhook endpoint can receive:
 | `PaymentConfirmed` | Payment confirmed on-chain |
 | `PaymentFailed` | Payment failed or was rejected |
 | `PaymentExpired` | Payment expired before completion |
+| `FraudFlagRaised` | Payment flagged by fraud controls |
+| `FraudPaymentBlocked` | Payment blocked by fraud controls |
+
+### Refund Events
+
+| Event | Description |
+|-------|-------------|
+| `RefundInitiated` | Refund request created |
+| `RefundCompleted` | Refund transfer completed |
+| `RefundFailed` | Refund transfer failed |
+
+### Dispute Events
+
+| Event | Description |
+|-------|-------------|
+| `DisputeOpened` | Customer opened a dispute |
+| `DisputeResponded` | Merchant submitted a dispute response |
+| `DisputeResolved` | Dispute resolved by merchant/admin action |
 
 ### Payment Intent Events
 
@@ -126,6 +144,9 @@ Every webhook delivery is an HTTP POST with a JSON body:
   },
   "settlement": null,
   "withdrawal": null,
+  "refund": null,
+  "dispute": null,
+  "fraud": null,
   "timestamp": "2026-03-01T12:05:00Z"
 }
 ```
@@ -152,6 +173,24 @@ Every webhook delivery is an HTTP POST with a JSON body:
   Withdrawal data. Present for withdrawal events.
 
   Key fields: `id`, `merchant_id`, `to_address`, `from_address`, `amount`, `token`, `transaction_signature`, `status`.
+</ResponseField>
+
+<ResponseField name="refund" type="object">
+  Refund data. Present for `RefundInitiated`, `RefundCompleted`, `RefundFailed`.
+
+  Key fields: `id`, `payment_id`, `merchant_id`, `amount_usd`, `status`, `reason`, `initiated_by`, `transaction_signature`, `customer_wallet`, `customer_email`, `created_at`, `completed_at`.
+</ResponseField>
+
+<ResponseField name="dispute" type="object">
+  Dispute data. Present for `DisputeOpened`, `DisputeResponded`, `DisputeResolved`.
+
+  Key fields: `id`, `payment_id`, `refund_id`, `merchant_id`, `customer_email`, `customer_wallet`, `dispute_type`, `status`, `description`, `opened_at`, `resolved_at`.
+</ResponseField>
+
+<ResponseField name="fraud" type="object">
+  Fraud data. Present for fraud events.
+
+  Key fields: `payment_id`, `merchant_id`, `fraud_score`, `blocked`, `flags`.
 </ResponseField>
 
 <ResponseField name="timestamp" type="string">

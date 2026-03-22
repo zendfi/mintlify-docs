@@ -73,6 +73,17 @@ ZendFi can apply one of three actions:
 | Flagged for review | Elevated but non-blocking risk | Payment is created as `pending` with a review flag |
 | Blocked | High risk or sanctions hit | Request or submission is rejected |
 
+## Disputes and Refunds in the Risk Lifecycle
+
+ZendFi dispute and refund operations are integrated with existing risk controls:
+
+- Refund creation is restricted to merchant-owned, confirmed payments.
+- Partial refunds are allowed up to remaining refundable balance.
+- Public dispute creation requires customer ownership checks and OTP verification.
+- Dispute resolution can trigger merchant-issued refunds, preserving an auditable chain.
+
+See [Refunds](/api-reference/refunds) and [Disputes](/api-reference/disputes) for endpoint-level behavior.
+
 <Warning>
 A blocked response does not always mean malicious intent. It can also be a protective false positive. Merchants should have an escalation path for legitimate customers.
 </Warning>
@@ -104,6 +115,7 @@ To reduce friction and false positives:
 3. Keep customer checkout flows consistent (wallet, session, and network behavior).
 4. Retry responsibly with idempotency and clear UX when a payment is blocked.
 5. Define an internal review process for high-value or first-time customers.
+6. Use dispute response timelines and evidence payloads consistently for operational audits.
 
 ## Customer Messaging Guidance
 
@@ -122,6 +134,7 @@ Suggested support message:
 - Monitor blocked and flagged payment rates.
 - Review recurring blocked wallets and IPs for abuse patterns.
 - Re-tune thresholds using observed false-positive and fraud-loss rates.
+- Monitor fraud webhook streams (`FraudFlagRaised`, `FraudPaymentBlocked`) for alerting and incident response.
 
 ## Need Help?
 

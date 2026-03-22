@@ -1,0 +1,147 @@
+---
+title: Refunds
+description: Create and track voluntary refunds for confirmed payments.
+---
+
+# Refunds
+
+ZendFi supports merchant-initiated voluntary refunds for confirmed payments, including partial refunds.
+
+## Create a Refund
+
+<Note>
+Requires authenticated merchant access.
+</Note>
+
+```
+POST /api/v1/payments/{payment_id}/refund
+```
+
+Creates a refund in `pending` status and begins asynchronous processing.
+
+### Validation Rules
+
+- Payment must exist and belong to the authenticated merchant
+- Payment status must be `confirmed`
+- Refund amount must be greater than `0`
+- Refund amount must be less than or equal to remaining refundable balance
+- Only one active refund (`pending` or `processing`) is allowed per payment
+
+### Request Body
+
+<ParamField body="amount_usd" type="number" required>
+  Refund amount in USD.
+</ParamField>
+
+<ParamField body="refund_reason" type="string">
+  Human-readable reason for the refund.
+</ParamField>
+
+<ParamField body="metadata" type="object">
+  Optional metadata for internal tracking.
+</ParamField>
+
+### Example
+
+```bash
+curl -X POST https://api.zendfi.tech/api/v1/payments/0f1b6f0b-02ef-4fd4-bf31-a89f2fb52f54/refund \
+  -H "Authorization: Bearer zfi_live_your_key" \
+  -H "Content-Type: application/json" \
+  -H "idempotency-key: refund_order_123_part1" \
+  -d '{
+    "amount_usd": 10.50,
+    "refund_reason": "duplicate charge",
+    "metadata": { "order_id": "order_123" }
+  }'
+```
+
+### Response
+
+```json
+{
+  "id": "fd8cdbe2-efdd-4834-a8e8-7068d93d4e77",
+  "payment_id": "0f1b6f0b-02ef-4fd4-bf31-a89f2fb52f54",
+  "amount": 10.5,
+  "status": "pending",
+  "estimated_completion": "2026-03-22T10:25:41.251Z"
+}
+```
+
+## List Refunds for a Payment
+
+```
+GET /api/v1/payments/{payment_id}/refunds
+```
+
+Returns all refunds for a merchant-owned payment, ordered by newest first.
+
+### Example
+
+```bash
+curl https://api.zendfi.tech/api/v1/payments/0f1b6f0b-02ef-4fd4-bf31-a89f2fb52f54/refunds \
+  -H "Authorization: Bearer zfi_live_your_key"
+```
+
+## List Merchant Refunds
+
+```
+GET /api/v1/merchants/me/refunds
+```
+
+Session-authenticated merchant endpoint for dashboard integrations.
+
+### Query Parameters
+
+<ParamField query="limit" type="integer" default="50">
+  Number of records to return (max `100`).
+</ParamField>
+
+<ParamField query="offset" type="integer" default="0">
+  Number of records to skip.
+</ParamField>
+
+<ParamField query="status" type="string">
+  Filter by refund status: `pending`, `processing`, `completed`, `failed`.
+</ParamField>
+
+<ParamField query="start_date" type="string">
+  ISO date/time filter (inclusive lower bound for `created_at`).
+</ParamField>
+
+<ParamField query="end_date" type="string">
+  ISO date/time filter (inclusive upper bound for `created_at`).
+</ParamField>
+
+### Example
+
+```bash
+curl "https://api.zendfi.tech/api/v1/merchants/me/refunds?status=completed&limit=25&offset=0" \
+  -H "Cookie: merchant_session=..."
+```
+
+## Get a Specific Refund
+
+```
+GET /api/v1/merchants/me/refunds/{id}
+```
+
+Returns a single refund detail object for the authenticated merchant.
+
+## Refund Statuses
+
+| Status | Meaning |
+|---|---|
+| `pending` | Refund request created and queued |
+| `processing` | Transfer is being executed |
+| `completed` | Refund transfer completed |
+| `failed` | Refund transfer failed |
+
+## Refund Lifecycle Events
+
+Refund processing emits webhook events:
+
+- `RefundInitiated`
+- `RefundCompleted`
+- `RefundFailed`
+
+See [Webhooks](/api-reference/webhooks) for payload details.

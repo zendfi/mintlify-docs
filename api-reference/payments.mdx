@@ -232,6 +232,26 @@ stateDiagram-v2
 
 ---
 
+## Refunds for Payments
+
+Payments can be refunded when status is `confirmed`.
+
+### Create Refund
+
+```
+POST /api/v1/payments/{payment_id}/refund
+```
+
+### List Refunds for a Payment
+
+```
+GET /api/v1/payments/{payment_id}/refunds
+```
+
+For full request/response details and merchant refund listing endpoints, see [Refunds](/api-reference/refunds).
+
+---
+
 ## Checkout Flow
 
 ZendFi provides several ways for customers to complete payment:

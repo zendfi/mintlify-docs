@@ -149,11 +149,15 @@ Formula definitions:
 - `false_positive_rate = resolved_safe_flags / total_flagged`
 - `estimated_fraud_prevented_usd = sum(amount_usd) of fraud-blocked payments`
 
-## Webhook Event: FraudFlagRaised
+## Fraud Webhook Events
 
-When a payment fraud score is **greater than 50**, ZendFi emits an additional webhook event:
+When a payment fraud score is elevated, ZendFi emits:
 
 - `fraud_flag_raised`
+
+When a payment is blocked by fraud checks, ZendFi emits:
+
+- `fraud_payment_blocked`
 
 The payload follows the standard payment webhook shape and includes payment metadata fields such as:
 
@@ -161,7 +165,7 @@ The payload follows the standard payment webhook shape and includes payment meta
 - `metadata.fraud_flags`
 - `metadata.fraud_review_required`
 
-This event is emitted in addition to `payment_created`.
+These events are emitted in addition to payment lifecycle events.
 
 ## Safe Client Messaging
 
@@ -179,5 +183,7 @@ Avoid exposing internal fraud signals or threshold details in user-facing UI.
 ## Related Docs
 
 - [Payments](/api-reference/payments)
+- [Refunds](/api-reference/refunds)
+- [Disputes](/api-reference/disputes)
 - [Payment Links](/api-reference/payment-links)
 - [Fraud and Compliance](/security/fraud-and-compliance)
