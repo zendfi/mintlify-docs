@@ -1,0 +1,248 @@
+---
+title: Sub Accounts
+description: Manage merchant-controlled sub-accounts, delegation tokens, and scoped withdrawals.
+---
+
+# Sub Accounts
+
+Sub-accounts are merchant-owned child wallets with dedicated MPC keys. They let you isolate balances, scope delegated access, and route splits/offramp flows by sub-account.
+
+<Note>
+  Sub-accounts are created programmatically via API, SDK, or CLI. The dashboard intentionally provides a read-only watchtower view.
+</Note>
+
+## Authentication
+
+All sub-account endpoints are protected merchant endpoints.
+
+- Use `Authorization: Bearer zfi_test_...` or `Authorization: Bearer zfi_live_...`
+- Dashboard sessions also work for merchant UI usage.
+
+## Create Sub-Account
+
+```http
+POST /api/v1/subaccounts
+```
+
+<ParamField body="label" type="string" required>
+  Immutable label for this sub-account. Must be unique per merchant.
+</ParamField>
+
+<ParamField body="spend_limit_usdc" type="number">
+  Optional configured spend limit (USDC).
+</ParamField>
+
+<ParamField body="access_mode" type="string" default="delegated">
+  `delegated` or `merchant_managed`.
+</ParamField>
+
+<ParamField body="yield_enabled" type="boolean" default="false">
+  Yield toggle metadata for this sub-account.
+</ParamField>
+
+### Example
+
+```bash
+curl -X POST https://api.zendfi.tech/api/v1/subaccounts \
+  -H "Authorization: Bearer zfi_test_your_key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "label": "user_paschal_001",
+    "spend_limit_usdc": 500,
+    "access_mode": "delegated",
+    "yield_enabled": false
+  }'
+```
+
+### Response
+
+```json
+{
+  "id": "sa_7b1w9j2k4m8p",
+  "merchant_id": "e9c1c4dc-7aa5-4ad5-90af-6e7035f4503d",
+  "wallet_address": "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU",
+  "label": "user_paschal_001",
+  "status": "active",
+  "spend_limit_usdc": 500,
+  "access_mode": "delegated",
+  "session_key": null,
+  "yield_enabled": false,
+  "created_at": "2026-03-26T18:00:00Z"
+}
+```
+
+---
+
+## List Sub-Accounts
+
+```http
+GET /api/v1/subaccounts
+```
+
+Returns all sub-accounts under the authenticated merchant.
+
+---
+
+## Get Sub-Account
+
+```http
+GET /api/v1/subaccounts/{id}
+```
+
+`id` accepts either the UUID or external ID (for example `sa_xxxxx`).
+
+---
+
+## Get Sub-Account Balance
+
+```http
+GET /api/v1/subaccounts/{id}/balance
+```
+
+### Response
+
+```json
+{
+  "subaccount_id": "sa_7b1w9j2k4m8p",
+  "wallet_address": "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU",
+  "usdc_balance": 125.42,
+  "sol_balance": 0.0192,
+  "accrued_yield": 0,
+  "yield_enabled": false,
+  "status": "active"
+}
+```
+
+---
+
+## Mint Delegation Token
+
+```http
+POST /api/v1/subaccounts/{id}/session-key
+```
+
+<ParamField body="scope" type="string" required>
+  `deposit_only`, `withdraw_only`, `spend_only`, `read_only`, or `full_access`.
+</ParamField>
+
+<ParamField body="spend_limit_usdc" type="number">
+  Optional spend cap enforced for this token.
+</ParamField>
+
+<ParamField body="expires_in_seconds" type="integer" default="3600">
+  Token lifetime in seconds.
+</ParamField>
+
+<ParamField body="whitelist" type="array<string>">
+  Optional destination allowlist.
+</ParamField>
+
+<ParamField body="single_use" type="boolean" default="false">
+  If true, token auto-revokes after first successful authorized use.
+</ParamField>
+
+### Response
+
+```json
+{
+  "token_id": "8fe55f3b-7bd5-4768-a6df-6b28dbad1e61",
+  "subaccount_id": "sa_7b1w9j2k4m8p",
+  "scope": "withdraw_only",
+  "expires_at": "2026-03-26T18:15:00Z",
+  "spend_limit_usdc": 50,
+  "delegation_token": "satk_xxxxx"
+}
+```
+
+<Warning>
+  `delegation_token` is returned once. Treat it like a secret and never log it.
+</Warning>
+
+---
+
+## Freeze Sub-Account
+
+```http
+POST /api/v1/subaccounts/{id}/freeze
+```
+
+Optional body:
+
+```json
+{ "reason": "fraud-review" }
+```
+
+Freezing revokes active delegation tokens and blocks sub-account activity.
+
+---
+
+## Drain Sub-Account
+
+```http
+POST /api/v1/subaccounts/{id}/drain
+```
+
+Drains funds from the sub-account wallet back to the merchant wallet.
+
+### Body
+
+```json
+{
+  "token": "Usdc",
+  "amount": 25,
+  "mode": "live",
+  "passkey_signature": {
+    "credential_id": "...",
+    "authenticator_data": [1,2,3],
+    "signature": [4,5,6],
+    "client_data_json": [7,8,9]
+  }
+}
+```
+
+---
+
+## Withdraw From Sub-Account
+
+```http
+POST /api/v1/subaccounts/{id}/withdraw
+```
+
+### Body
+
+```json
+{
+  "to_address": "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU",
+  "amount": 10,
+  "token": "Usdc",
+  "mode": "live",
+  "delegation_token": "satk_xxxxx",
+  "passkey_signature": {
+    "credential_id": "...",
+    "authenticator_data": [1,2,3],
+    "signature": [4,5,6],
+    "client_data_json": [7,8,9]
+  }
+}
+```
+
+---
+
+## Close Sub-Account
+
+```http
+DELETE /api/v1/subaccounts/{id}
+```
+
+Closes the sub-account, deactivates its wallet, and revokes associated delegation tokens.
+
+---
+
+## Webhook Coverage
+
+Sub-account flows emit:
+
+- Withdrawal events: `WithdrawalInitiated`, `WithdrawalFailed`, `WithdrawalCompleted`
+- Lifecycle events: `SubAccountCreated`, `SubAccountDelegationTokenMinted`, `SubAccountFrozen`, `SubAccountClosed`
+
+See [Webhooks](/api-reference/webhooks) for payload structure.

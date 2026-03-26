@@ -1,0 +1,101 @@
+---
+title: Sub Accounts
+description: Manage sub-accounts and delegation tokens from the ZendFi CLI.
+---
+
+# CLI Sub Accounts
+
+Use the `subaccounts` command group (alias: `sa`) to operate merchant sub-accounts.
+
+## Commands
+
+| Command | Description |
+|---|---|
+| `zendfi subaccounts create --label <label>` | Create a sub-account |
+| `zendfi subaccounts list` | List all sub-accounts |
+| `zendfi subaccounts get <id>` | Get a sub-account by UUID or external ID |
+| `zendfi subaccounts balance <id>` | Get current SOL/USDC balances |
+| `zendfi subaccounts token <id>` | Mint a scoped delegation token |
+| `zendfi subaccounts freeze <id>` | Freeze sub-account and revoke active delegation tokens |
+| `zendfi subaccounts drain <id>` | Drain funds back to merchant wallet |
+| `zendfi subaccounts withdraw <id>` | Withdraw to external wallet |
+| `zendfi subaccounts close <id>` | Close sub-account |
+
+## Create
+
+```bash
+zendfi subaccounts create \
+  --label user_paschal_001 \
+  --spend-limit 500 \
+  --access-mode delegated
+```
+
+## List
+
+```bash
+zendfi subaccounts list
+```
+
+## Balance
+
+```bash
+zendfi subaccounts balance sa_xxxxx
+```
+
+## Mint Delegation Token
+
+```bash
+zendfi subaccounts token sa_xxxxx \
+  --scope withdraw_only \
+  --spend-limit 100 \
+  --ttl 900 \
+  --whitelist 7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU \
+  --single-use
+```
+
+## Freeze
+
+```bash
+zendfi subaccounts freeze sa_xxxxx --reason "fraud-review"
+```
+
+## Drain
+
+```bash
+zendfi subaccounts drain sa_xxxxx \
+  --amount 25 \
+  --token Usdc \
+  --mode live \
+  --passkey-file ./passkey-signature.json
+```
+
+## Withdraw
+
+```bash
+zendfi subaccounts withdraw sa_xxxxx \
+  --to 7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU \
+  --amount 10 \
+  --token Usdc \
+  --mode live \
+  --delegation-token satk_xxxxx \
+  --passkey-file ./passkey-signature.json
+```
+
+## Close
+
+```bash
+zendfi subaccounts close sa_xxxxx
+```
+
+## Passkey Signature File
+
+Sensitive operations require `--passkey-file` JSON with this shape:
+
+```json
+{
+  "credential_id": "...",
+  "authenticator_data": [1, 2, 3],
+  "signature": [4, 5, 6],
+  "client_data_json": [7, 8, 9]
+}
+```

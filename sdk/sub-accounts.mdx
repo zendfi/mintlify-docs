@@ -1,0 +1,102 @@
+---
+title: Sub Accounts
+description: SDK methods for sub-account lifecycle, delegation tokens, and scoped transfers.
+---
+
+# SDK Sub Accounts
+
+The SDK exposes first-class methods for sub-account operations.
+
+## Methods
+
+```typescript
+zendfi.createSubAccount(...)
+zendfi.listSubAccounts()
+zendfi.getSubAccount(...)
+zendfi.getSubAccountBalance(...)
+zendfi.mintSubAccountDelegationToken(...)
+zendfi.freezeSubAccount(...)
+zendfi.drainSubAccount(...)
+zendfi.withdrawFromSubAccount(...)
+zendfi.closeSubAccount(...)
+```
+
+## Create
+
+```typescript
+const sub = await zendfi.createSubAccount({
+  label: 'user_paschal_001',
+  spend_limit_usdc: 500,
+  access_mode: 'delegated',
+  yield_enabled: false,
+});
+```
+
+## List and Inspect
+
+```typescript
+const subaccounts = await zendfi.listSubAccounts();
+const sub = await zendfi.getSubAccount(subaccounts[0].id);
+const balance = await zendfi.getSubAccountBalance(sub.id);
+```
+
+## Mint Delegation Token
+
+```typescript
+const token = await zendfi.mintSubAccountDelegationToken(sub.id, {
+  scope: 'withdraw_only',
+  spend_limit_usdc: 50,
+  expires_in_seconds: 900,
+  whitelist: ['7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU'],
+  single_use: true,
+});
+```
+
+## Freeze
+
+```typescript
+await zendfi.freezeSubAccount(sub.id, { reason: 'fraud-review' });
+```
+
+## Drain to Merchant Wallet
+
+```typescript
+await zendfi.drainSubAccount(sub.id, {
+  token: 'Usdc',
+  amount: 10,
+  mode: 'live',
+  passkey_signature,
+});
+```
+
+## Withdraw to External Address
+
+```typescript
+await zendfi.withdrawFromSubAccount(sub.id, {
+  to_address: '7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU',
+  amount: 5,
+  token: 'Usdc',
+  mode: 'live',
+  delegation_token: token.delegation_token,
+  passkey_signature,
+});
+```
+
+## Close
+
+```typescript
+await zendfi.closeSubAccount(sub.id);
+```
+
+## Passkey Signature Shape
+
+```typescript
+type PasskeySignaturePayload = {
+  credential_id: string;
+  authenticator_data: number[];
+  signature: number[];
+  client_data_json: number[];
+};
+```
+
+Use this payload for sensitive transfer methods (`drainSubAccount`, `withdrawFromSubAccount`).

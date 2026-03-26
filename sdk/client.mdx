@@ -202,6 +202,73 @@ const links = await zendfi.listPaymentLinks();
 
 ---
 
+## Sub Accounts
+
+Sub-account methods are documented in detail on [SDK Sub Accounts](/sdk/sub-accounts).
+
+### createSubAccount
+
+```typescript
+const sub = await zendfi.createSubAccount({
+  label: 'user_paschal_001',
+  spend_limit_usdc: 500,
+  access_mode: 'delegated',
+  yield_enabled: false,
+});
+```
+
+### listSubAccounts
+
+```typescript
+const subs = await zendfi.listSubAccounts();
+```
+
+### getSubAccount / getSubAccountBalance
+
+```typescript
+const sub = await zendfi.getSubAccount('sa_xxxxx');
+const balance = await zendfi.getSubAccountBalance(sub.id);
+```
+
+### mintSubAccountDelegationToken
+
+```typescript
+const token = await zendfi.mintSubAccountDelegationToken(sub.id, {
+  scope: 'withdraw_only',
+  spend_limit_usdc: 100,
+  expires_in_seconds: 900,
+  single_use: true,
+});
+```
+
+### freezeSubAccount / closeSubAccount
+
+```typescript
+await zendfi.freezeSubAccount(sub.id, { reason: 'fraud-review' });
+await zendfi.closeSubAccount(sub.id);
+```
+
+### drainSubAccount / withdrawFromSubAccount
+
+```typescript
+await zendfi.drainSubAccount(sub.id, {
+  token: 'Usdc',
+  amount: 25,
+  mode: 'live',
+  passkey_signature,
+});
+
+await zendfi.withdrawFromSubAccount(sub.id, {
+  to_address: '7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU',
+  amount: 10,
+  token: 'Usdc',
+  delegation_token: token.delegation_token,
+  passkey_signature,
+});
+```
+
+---
+
 ## Subscriptions
 
 ### createSubscriptionPlan

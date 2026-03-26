@@ -85,6 +85,15 @@ All events your webhook endpoint can receive:
 | `WithdrawalCompleted` | Withdrawal confirmed on-chain |
 | `WithdrawalFailed` | Withdrawal failed |
 
+### Sub-Account Lifecycle Events
+
+| Event | Description |
+|-------|-------------|
+| `SubAccountCreated` | A sub-account was created |
+| `SubAccountDelegationTokenMinted` | Delegation token minted for a sub-account |
+| `SubAccountFrozen` | Sub-account was frozen |
+| `SubAccountClosed` | Sub-account was closed |
+
 ### Subscription Events
 
 | Event | Description |
@@ -172,7 +181,13 @@ Every webhook delivery is an HTTP POST with a JSON body:
 <ResponseField name="withdrawal" type="object">
   Withdrawal data. Present for withdrawal events.
 
-  Key fields: `id`, `merchant_id`, `to_address`, `from_address`, `amount`, `token`, `transaction_signature`, `status`.
+  Key fields: `id`, `merchant_id`, `sub_account_id`, `delegation_token_id`, `to_address`, `from_address`, `amount`, `token`, `transaction_signature`, `status`.
+</ResponseField>
+
+<ResponseField name="sub_account" type="object">
+  Sub-account lifecycle payload. Present for `SubAccountCreated`, `SubAccountDelegationTokenMinted`, `SubAccountFrozen`, and `SubAccountClosed`.
+
+  Key fields: `id`, `external_id`, `merchant_id`, `label`, `wallet_address`, `created_at`, `reference_id`, `metadata`.
 </ResponseField>
 
 <ResponseField name="refund" type="object">
