@@ -18,6 +18,9 @@ zendfi.mintSubAccountDelegationToken(...)
 zendfi.freezeSubAccount(...)
 zendfi.drainSubAccount(...)
 zendfi.withdrawFromSubAccount(...)
+zendfi.withdrawSubAccountToBank(...)
+zendfi.createSubAccountAutomationToken(...)
+zendfi.revokeSubAccountAutomationToken(...)
 zendfi.closeSubAccount(...)
 ```
 
@@ -82,6 +85,45 @@ await zendfi.withdrawFromSubAccount(sub.id, {
 });
 ```
 
+## Withdraw to Bank (One-Shot)
+
+```typescript
+await zendfi.withdrawSubAccountToBank(sub.id, {
+  amount_usdc: 25,
+  bank_id: '9PSB7A2A2LJZ3H6Q4G8XJ6A4',
+  account_number: '0123456789',
+  mode: 'live',
+  automation_token: 'saatk_xxxxx',
+  delegation_token: token.delegation_token,
+  passkey_signature,
+});
+```
+
+This method mirrors split bank-withdraw proxy-email OTP automation, so no manual OTP entry is required in your integration.
+
+`automation_token` and `delegation_token` are mutually exclusive.
+
+## Mint Automation Token (Session Auth)
+
+```typescript
+const automation = await zendfi.createSubAccountAutomationToken({
+  sub_account_id: sub.id,
+  ttl_seconds: 3600,
+  max_uses: 25,
+  total_limit_usdc: 500,
+  per_tx_limit_usdc: 50,
+  allowed_bank_ids: ['9PSB7A2A2LJZ3H6Q4G8XJ6A4'],
+  allowed_account_numbers: ['0123456789'],
+  mode: 'live',
+});
+```
+
+## Revoke Automation Token
+
+```typescript
+await zendfi.revokeSubAccountAutomationToken(automation.token_id);
+```
+
 ## Close
 
 ```typescript
@@ -99,4 +141,4 @@ type PasskeySignaturePayload = {
 };
 ```
 
-Use this payload for sensitive transfer methods (`drainSubAccount`, `withdrawFromSubAccount`).
+Use this payload for sensitive transfer methods (`drainSubAccount`, `withdrawFromSubAccount`, `withdrawSubAccountToBank`).

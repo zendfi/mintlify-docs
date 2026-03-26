@@ -228,6 +228,129 @@ POST /api/v1/subaccounts/{id}/withdraw
 
 ---
 
+## Withdraw Sub-Account To Bank (One-Shot)
+
+```http
+POST /api/v1/subaccounts/{id}/withdraw-bank
+```
+
+Creates a PAJ offramp order and automatically completes OTP verification using the same proxy-email automation model used by split bank withdrawals.
+
+### Body
+
+```json
+{
+  "amount_usdc": 25,
+  "bank_id": "9PSB7A2A2LJZ3H6Q4G8XJ6A4",
+  "account_number": "0123456789",
+  "mode": "live",
+  "automation_token": "saatk_xxxxx",
+  "delegation_token": "satk_xxxxx",
+  "passkey_signature": {
+    "credential_id": "...",
+    "authenticator_data": [1,2,3],
+    "signature": [4,5,6],
+    "client_data_json": [7,8,9]
+  }
+}
+```
+
+### Response
+
+```json
+{
+  "success": true,
+  "subaccount_id": "sa_7b1w9j2k4m8p",
+  "order_id": "17d8564c-6807-4f58-b8f0-c4338fb310b4",
+  "paj_order_id": "67f1d2f54d9f553abf9a2310",
+  "paj_deposit_address": "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU",
+  "bank_account_number": "0123456789",
+  "bank_account_name": "Paschal Okafor",
+  "amount_usdc": 25,
+  "fiat_amount": 38500,
+  "exchange_rate": 1540,
+  "fee": 0.25,
+  "status": "PAID",
+  "transaction_signature": "3k8...xyz"
+}
+```
+
+`automation_token` and `delegation_token` are mutually exclusive.
+
+---
+
+## Mint Sub-Account Automation Token
+
+```http
+POST /api/v1/merchants/me/subaccounts/automation-tokens
+```
+
+Requires merchant dashboard session auth. Use this endpoint to mint bounded headless automation credentials for `withdraw-bank`.
+
+### Body
+
+```json
+{
+  "sub_account_id": "sa_7b1w9j2k4m8p",
+  "ttl_seconds": 3600,
+  "max_uses": 25,
+  "total_limit_usdc": 500,
+  "per_tx_limit_usdc": 50,
+  "allowed_bank_ids": ["9PSB7A2A2LJZ3H6Q4G8XJ6A4"],
+  "allowed_account_numbers": ["0123456789"],
+  "mode": "live"
+}
+```
+
+### Response
+
+```json
+{
+  "token_id": "0f8fad5b-d9cb-469f-a165-70867728950e",
+  "automation_token": "saatk_xxxxx",
+  "merchant_id": "e9c1c4dc-7aa5-4ad5-90af-6e7035f4503d",
+  "sub_account_id": "sa_7b1w9j2k4m8p",
+  "expires_at": "2026-03-26T20:00:00Z",
+  "max_uses": 25,
+  "total_limit_usdc": 500,
+  "per_tx_limit_usdc": 50,
+  "allowed_bank_ids": ["9PSB7A2A2LJZ3H6Q4G8XJ6A4"],
+  "allowed_account_numbers": ["0123456789"],
+  "mode": "live",
+  "created_at": "2026-03-26T19:00:00Z"
+}
+```
+
+<Warning>
+  `automation_token` is returned once. Treat it as a secret and never log it.
+</Warning>
+
+---
+
+## Revoke Sub-Account Automation Token
+
+```http
+POST /api/v1/merchants/me/subaccounts/automation-tokens/{token_id}/revoke
+```
+
+Immediately revokes the automation token.
+
+### Response
+
+```json
+{
+  "success": true,
+  "token_id": "0f8fad5b-d9cb-469f-a165-70867728950e",
+  "status": "revoked"
+}
+```
+
+<Note>
+  This endpoint is API-key compatible and requires no manual OTP submission in your client. OTP handling is automated server-side via proxy email and IMAP monitor.
+</Note>
+
+---
+
 ## Close Sub-Account
 
 ```http

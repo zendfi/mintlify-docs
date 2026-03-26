@@ -19,6 +19,9 @@ Use the `subaccounts` command group (alias: `sa`) to operate merchant sub-accoun
 | `zendfi subaccounts freeze <id>` | Freeze sub-account and revoke active delegation tokens |
 | `zendfi subaccounts drain <id>` | Drain funds back to merchant wallet |
 | `zendfi subaccounts withdraw <id>` | Withdraw to external wallet |
+| `zendfi subaccounts withdraw-bank <id>` | Withdraw to bank with automated proxy-email OTP flow |
+| `zendfi subaccounts automation-token-mint` | Mint bounded automation token for headless withdraw-bank |
+| `zendfi subaccounts automation-token-revoke <token-id>` | Revoke automation token |
 | `zendfi subaccounts close <id>` | Close sub-account |
 
 ## Create
@@ -79,6 +82,43 @@ zendfi subaccounts withdraw sa_xxxxx \
   --mode live \
   --delegation-token satk_xxxxx \
   --passkey-file ./passkey-signature.json
+```
+
+## Withdraw to Bank (One-Shot)
+
+```bash
+zendfi subaccounts withdraw-bank sa_xxxxx \
+  --amount 25 \
+  --bank-id 9PSB7A2A2LJZ3H6Q4G8XJ6A4 \
+  --account-number 0123456789 \
+  --mode live \
+  --automation-token saatk_xxxxx \
+  --delegation-token satk_xxxxx \
+  --passkey-file ./passkey-signature.json
+```
+
+This command mirrors split proxy-email OTP automation. No manual OTP prompt is required.
+
+`--automation-token` and `--delegation-token` are mutually exclusive.
+
+## Mint Automation Token
+
+```bash
+zendfi subaccounts automation-token-mint \
+  --subaccount-id sa_xxxxx \
+  --ttl 3600 \
+  --max-uses 25 \
+  --total-limit 500 \
+  --per-tx-limit 50 \
+  --bank-ids 9PSB7A2A2LJZ3H6Q4G8XJ6A4 \
+  --account-numbers 0123456789 \
+  --mode live
+```
+
+## Revoke Automation Token
+
+```bash
+zendfi subaccounts automation-token-revoke 0f8fad5b-d9cb-469f-a165-70867728950e
 ```
 
 ## Close

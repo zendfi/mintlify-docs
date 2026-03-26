@@ -181,7 +181,7 @@ Every webhook delivery is an HTTP POST with a JSON body:
 <ResponseField name="withdrawal" type="object">
   Withdrawal data. Present for withdrawal events.
 
-  Key fields: `id`, `merchant_id`, `sub_account_id`, `delegation_token_id`, `to_address`, `from_address`, `amount`, `token`, `transaction_signature`, `status`.
+  Key fields: `id`, `merchant_id`, `sub_account_id`, `delegation_token_id`, `automation_token_id`, `auth_mode`, `to_address`, `from_address`, `amount`, `token`, `transaction_signature`, `status`, `is_bank_withdrawal`, `offramp_order_id`, `paj_order_id`, `bank_account_number`, `bank_name`.
 </ResponseField>
 
 <ResponseField name="sub_account" type="object">
