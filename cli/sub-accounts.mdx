@@ -151,9 +151,25 @@ zendfi subaccounts signing-grant-mint \
   --per-tx-limit 50 \
   --bank-ids 9PSB7A2A2LJZ3H6Q4G8XJ6A4 \
   --account-numbers 0123456789 \
+  --mode live
+```
+
+This command starts a browser intent, opens the approval URL, and polls until passkey approval completes.
+
+Legacy fallback (manual payload) remains available:
+
+```bash
+zendfi subaccounts signing-grant-mint \
+  --subaccount-id sa_xxxxx \
+  --ttl 3600 \
+  --max-uses 25 \
+  --total-limit 500 \
+  --per-tx-limit 50 \
   --mode live \
   --passkey-file ./passkey-signature.json
 ```
+
+Use `--no-open` if your environment cannot auto-open a browser.
 
 ## Revoke Signing Grant
 
@@ -169,7 +185,7 @@ zendfi subaccounts close sa_xxxxx
 
 ## Passkey Signature File
 
-Interactive signing operations require `--passkey-file` JSON with this shape:
+Interactive fallback operations can use `--passkey-file` JSON with this shape:
 
 ```json
 {

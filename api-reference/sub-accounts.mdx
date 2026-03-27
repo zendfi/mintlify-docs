@@ -404,6 +404,89 @@ Requires merchant dashboard session auth. Use this endpoint to perform one inter
 
 ---
 
+## Start Signing Grant Browser Intent
+
+```http
+POST /api/v1/subaccounts/signing-grants/browser-intents/start
+```
+
+Recommended API-key flow for CLI/SDK parity with merchant dashboard UX. This creates a short-lived browser approval intent and returns a one-time approval URL.
+
+### Body
+
+```json
+{
+  "sub_account_id": "sa_7b1w9j2k4m8p",
+  "ttl_seconds": 3600,
+  "max_uses": 25,
+  "total_limit_usdc": 500,
+  "per_tx_limit_usdc": 50,
+  "allowed_bank_ids": ["9PSB7A2A2LJZ3H6Q4G8XJ6A4"],
+  "allowed_account_numbers": ["0123456789"],
+  "mode": "live"
+}
+```
+
+### Response
+
+```json
+{
+  "intent_id": "f8df2a11-4f6b-4dbf-b5fb-d03ddcf3f2e3",
+  "intent_token": "sgit_xxxxx",
+  "approval_url": "https://api.zendfi.tech/api/v1/subaccounts/signing-grants/approval?intent_id=f8df2a11-4f6b-4dbf-b5fb-d03ddcf3f2e3&token=sgit_xxxxx",
+  "expires_at": "2026-03-27T12:00:00Z"
+}
+```
+
+<Warning>
+  `intent_token` is returned once. Treat it as a secret and never log it.
+</Warning>
+
+---
+
+## Poll Signing Grant Browser Intent
+
+```http
+POST /api/v1/subaccounts/signing-grants/browser-intents/poll
+```
+
+Polls intent status. On approval, this returns the minted `signing_grant` exactly once and marks the intent consumed.
+
+### Body
+
+```json
+{
+  "intent_id": "f8df2a11-4f6b-4dbf-b5fb-d03ddcf3f2e3",
+  "intent_token": "sgit_xxxxx"
+}
+```
+
+### Response (approved)
+
+```json
+{
+  "status": "approved",
+  "completed": true,
+  "expires_at": "2026-03-27T12:00:00Z",
+  "grant": {
+    "grant_id": "2f8fad5b-d9cb-469f-a165-70867728950e",
+    "signing_grant": "ssgt_xxxxx",
+    "merchant_id": "e9c1c4dc-7aa5-4ad5-90af-6e7035f4503d",
+    "sub_account_id": "sa_7b1w9j2k4m8p",
+    "expires_at": "2026-03-26T20:00:00Z",
+    "max_uses": 25,
+    "total_limit_usdc": 500,
+    "per_tx_limit_usdc": 50,
+    "allowed_bank_ids": ["9PSB7A2A2LJZ3H6Q4G8XJ6A4"],
+    "allowed_account_numbers": ["0123456789"],
+    "mode": "live",
+    "created_at": "2026-03-26T19:00:00Z"
+  }
+}
+```
+
+---
+
 ## Revoke Sub-Account Signing Grant
 
 ```http

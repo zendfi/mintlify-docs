@@ -23,6 +23,8 @@ zendfi.withdrawSubAccountToBank(...)
 zendfi.createSubAccountAutomationToken(...)
 zendfi.revokeSubAccountAutomationToken(...)
 zendfi.createSubAccountSigningGrant(...)
+zendfi.startSubAccountSigningGrantBrowserIntent(...)
+zendfi.pollSubAccountSigningGrantBrowserIntent(...)
 zendfi.revokeSubAccountSigningGrant(...)
 zendfi.closeSubAccount(...)
 ```
@@ -157,6 +159,85 @@ const grant = await zendfi.createSubAccountSigningGrant({
   mode: 'live',
   passkey_signature,
 });
+```
+
+## Browser-Mediated Signing Grant (Recommended)
+
+```typescript
+import open from 'open';
+
+const intent = await zendfi.startSubAccountSigningGrantBrowserIntent({
+  sub_account_id: sub.id,
+  ttl_seconds: 3600,
+  max_uses: 25,
+  total_limit_usdc: 500,
+  per_tx_limit_usdc: 50,
+  mode: 'live',
+});
+
+await open(intent.approval_url);
+
+let signingGrant: string | undefined;
+for (let i = 0; i < 180; i += 1) {
+  const poll = await zendfi.pollSubAccountSigningGrantBrowserIntent({
+    intent_id: intent.intent_id,
+    intent_token: intent.intent_token,
+  });
+
+  if (poll.completed) {
+    if (poll.status !== 'approved' || !poll.grant) {
+      throw new Error(poll.error || `intent ended in ${poll.status}`);
+    }
+    signingGrant = poll.grant.signing_grant;
+    break;
+  }
+
+  await new Promise((resolve) => setTimeout(resolve, 2000));
+}
+
+if (!signingGrant) {
+  throw new Error('Timed out waiting for passkey approval');
+}
+```
+
+Use this `signingGrant` in `withdrawFromSubAccount` or `withdrawSubAccountToBank`.
+
+### Frontend Browser Example
+
+Use this pattern in a dashboard/web app where a user clicks a button to approve with passkey.
+
+```typescript
+async function mintSigningGrantInBrowser(subAccountId: string) {
+  const intent = await zendfi.startSubAccountSigningGrantBrowserIntent({
+    sub_account_id: subAccountId,
+    ttl_seconds: 3600,
+    max_uses: 25,
+    total_limit_usdc: 500,
+    per_tx_limit_usdc: 50,
+    mode: 'live',
+  });
+
+  // Must run in direct user interaction context to avoid popup blocking.
+  window.open(intent.approval_url, '_blank', 'noopener,noreferrer');
+
+  for (let i = 0; i < 180; i += 1) {
+    const poll = await zendfi.pollSubAccountSigningGrantBrowserIntent({
+      intent_id: intent.intent_id,
+      intent_token: intent.intent_token,
+    });
+
+    if (poll.completed) {
+      if (poll.status !== 'approved' || !poll.grant) {
+        throw new Error(poll.error || `intent ended in ${poll.status}`);
+      }
+      return poll.grant.signing_grant;
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+  }
+
+  throw new Error('Timed out waiting for passkey approval');
+}
 ```
 
 ## Revoke Signing Grant
