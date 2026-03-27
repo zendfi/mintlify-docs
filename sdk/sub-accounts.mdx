@@ -92,9 +92,13 @@ await zendfi.withdrawFromSubAccount(sub.id, {
   token: 'Usdc',
   mode: 'live',
   delegation_token: token.delegation_token,
-  passkey_signature,
+  signing_grant: 'ssgt_xxxxx',
 });
 ```
+
+`signing_grant` and `passkey_signature` are mutually exclusive.
+
+`passkey_signature` is now optional for `withdrawFromSubAccount` and should only be used as an interactive fallback.
 
 ## Withdraw to Bank (One-Shot)
 

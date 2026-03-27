@@ -237,14 +237,13 @@ POST /api/v1/subaccounts/{id}/withdraw
   "token": "Usdc",
   "mode": "live",
   "delegation_token": "satk_xxxxx",
-  "passkey_signature": {
-    "credential_id": "...",
-    "authenticator_data": [1,2,3],
-    "signature": [4,5,6],
-    "client_data_json": [7,8,9]
-  }
+  "signing_grant": "ssgt_xxxxx"
 }
 ```
+
+`signing_grant` and `passkey_signature` are mutually exclusive.
+
+`passkey_signature` remains available as an interactive fallback and is no longer required for headless external-withdraw flows.
 
 ---
 

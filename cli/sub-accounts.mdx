@@ -92,8 +92,12 @@ zendfi subaccounts withdraw sa_xxxxx \
   --token Usdc \
   --mode live \
   --delegation-token satk_xxxxx \
-  --passkey-file ./passkey-signature.json
+  --signing-grant ssgt_xxxxx
 ```
+
+`--signing-grant` and `--passkey-file` are mutually exclusive.
+
+`--passkey-file` remains available as an interactive fallback.
 
 ## Withdraw to Bank (One-Shot)
 
