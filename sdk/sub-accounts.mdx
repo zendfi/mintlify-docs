@@ -22,6 +22,8 @@ zendfi.withdrawFromSubAccount(...)
 zendfi.withdrawSubAccountToBank(...)
 zendfi.createSubAccountAutomationToken(...)
 zendfi.revokeSubAccountAutomationToken(...)
+zendfi.createSubAccountSigningGrant(...)
+zendfi.revokeSubAccountSigningGrant(...)
 zendfi.closeSubAccount(...)
 ```
 
@@ -102,15 +104,19 @@ await zendfi.withdrawSubAccountToBank(sub.id, {
   bank_id: '9PSB7A2A2LJZ3H6Q4G8XJ6A4',
   account_number: '0123456789',
   mode: 'live',
+  signing_grant: 'ssgt_xxxxx',
   automation_token: 'saatk_xxxxx',
   delegation_token: token.delegation_token,
-  passkey_signature,
 });
 ```
 
 This method mirrors split bank-withdraw proxy-email OTP automation, so no manual OTP entry is required in your integration.
 
 `automation_token` and `delegation_token` are mutually exclusive.
+
+`signing_grant` and `passkey_signature` are mutually exclusive.
+
+`passkey_signature` is now optional for `withdrawSubAccountToBank` and should only be used as an interactive fallback.
 
 ## Mint Automation Token (Session Auth)
 
@@ -133,6 +139,28 @@ const automation = await zendfi.createSubAccountAutomationToken({
 await zendfi.revokeSubAccountAutomationToken(automation.token_id);
 ```
 
+## Mint Signing Grant (Session Auth)
+
+```typescript
+const grant = await zendfi.createSubAccountSigningGrant({
+  sub_account_id: sub.id,
+  ttl_seconds: 3600,
+  max_uses: 25,
+  total_limit_usdc: 500,
+  per_tx_limit_usdc: 50,
+  allowed_bank_ids: ['9PSB7A2A2LJZ3H6Q4G8XJ6A4'],
+  allowed_account_numbers: ['0123456789'],
+  mode: 'live',
+  passkey_signature,
+});
+```
+
+## Revoke Signing Grant
+
+```typescript
+await zendfi.revokeSubAccountSigningGrant(grant.grant_id);
+```
+
 ## Close
 
 ```typescript
@@ -150,4 +178,4 @@ type PasskeySignaturePayload = {
 };
 ```
 
-Use this payload for sensitive transfer methods (`drainSubAccount`, `withdrawFromSubAccount`, `withdrawSubAccountToBank`).
+Use this payload for sensitive transfer methods (`drainSubAccount`, `withdrawFromSubAccount`) and signing-grant minting (`createSubAccountSigningGrant`).

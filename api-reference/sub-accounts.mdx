@@ -264,14 +264,9 @@ Creates a PAJ offramp order and automatically completes OTP verification using t
   "bank_id": "9PSB7A2A2LJZ3H6Q4G8XJ6A4",
   "account_number": "0123456789",
   "mode": "live",
+  "signing_grant": "ssgt_xxxxx",
   "automation_token": "saatk_xxxxx",
-  "delegation_token": "satk_xxxxx",
-  "passkey_signature": {
-    "credential_id": "...",
-    "authenticator_data": [1,2,3],
-    "signature": [4,5,6],
-    "client_data_json": [7,8,9]
-  }
+  "delegation_token": "satk_xxxxx"
 }
 ```
 
@@ -296,6 +291,15 @@ Creates a PAJ offramp order and automatically completes OTP verification using t
 ```
 
 `automation_token` and `delegation_token` are mutually exclusive.
+
+`signing_grant` and `passkey_signature` are mutually exclusive.
+
+For API-key initiated bank withdrawals, provide:
+
+- one policy token (`automation_token` or `delegation_token`)
+- one signing authorization (`signing_grant`)
+
+`passkey_signature` remains available as an interactive fallback and is no longer required for headless flows.
 
 ---
 
@@ -344,6 +348,80 @@ Requires merchant dashboard session auth. Use this endpoint to mint bounded head
 <Warning>
   `automation_token` is returned once. Treat it as a secret and never log it.
 </Warning>
+
+---
+
+## Mint Sub-Account Signing Grant
+
+```http
+POST /api/v1/merchants/me/subaccounts/signing-grants
+```
+
+Requires merchant dashboard session auth. Use this endpoint to perform one interactive passkey approval and mint bounded headless signing credentials for `withdraw-bank`.
+
+### Body
+
+```json
+{
+  "sub_account_id": "sa_7b1w9j2k4m8p",
+  "ttl_seconds": 3600,
+  "max_uses": 25,
+  "total_limit_usdc": 500,
+  "per_tx_limit_usdc": 50,
+  "allowed_bank_ids": ["9PSB7A2A2LJZ3H6Q4G8XJ6A4"],
+  "allowed_account_numbers": ["0123456789"],
+  "mode": "live",
+  "passkey_signature": {
+    "credential_id": "...",
+    "authenticator_data": [1,2,3],
+    "signature": [4,5,6],
+    "client_data_json": [7,8,9]
+  }
+}
+```
+
+### Response
+
+```json
+{
+  "grant_id": "2f8fad5b-d9cb-469f-a165-70867728950e",
+  "signing_grant": "ssgt_xxxxx",
+  "merchant_id": "e9c1c4dc-7aa5-4ad5-90af-6e7035f4503d",
+  "sub_account_id": "sa_7b1w9j2k4m8p",
+  "expires_at": "2026-03-26T20:00:00Z",
+  "max_uses": 25,
+  "total_limit_usdc": 500,
+  "per_tx_limit_usdc": 50,
+  "allowed_bank_ids": ["9PSB7A2A2LJZ3H6Q4G8XJ6A4"],
+  "allowed_account_numbers": ["0123456789"],
+  "mode": "live",
+  "created_at": "2026-03-26T19:00:00Z"
+}
+```
+
+<Warning>
+  `signing_grant` is returned once. Treat it as a secret and never log it.
+</Warning>
+
+---
+
+## Revoke Sub-Account Signing Grant
+
+```http
+POST /api/v1/merchants/me/subaccounts/signing-grants/{grant_id}/revoke
+```
+
+Immediately revokes the signing grant.
+
+### Response
+
+```json
+{
+  "success": true,
+  "grant_id": "2f8fad5b-d9cb-469f-a165-70867728950e",
+  "status": "revoked"
+}
+```
 
 ---
 

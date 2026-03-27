@@ -23,6 +23,8 @@ Use the `subaccounts` command group (alias: `sa`) to operate merchant sub-accoun
 | `zendfi subaccounts withdraw-bank <id>` | Withdraw to bank with automated proxy-email OTP flow |
 | `zendfi subaccounts automation-token-mint` | Mint bounded automation token for headless withdraw-bank |
 | `zendfi subaccounts automation-token-revoke <token-id>` | Revoke automation token |
+| `zendfi subaccounts signing-grant-mint` | Mint bounded signing grant for headless signing |
+| `zendfi subaccounts signing-grant-revoke <grant-id>` | Revoke signing grant |
 | `zendfi subaccounts close <id>` | Close sub-account |
 
 ## Create
@@ -101,14 +103,18 @@ zendfi subaccounts withdraw-bank sa_xxxxx \
   --bank-id 9PSB7A2A2LJZ3H6Q4G8XJ6A4 \
   --account-number 0123456789 \
   --mode live \
+  --signing-grant ssgt_xxxxx \
   --automation-token saatk_xxxxx \
-  --delegation-token satk_xxxxx \
-  --passkey-file ./passkey-signature.json
+  --delegation-token satk_xxxxx
 ```
 
 This command mirrors split proxy-email OTP automation. No manual OTP prompt is required.
 
 `--automation-token` and `--delegation-token` are mutually exclusive.
+
+`--signing-grant` and `--passkey-file` are mutually exclusive.
+
+For API-key initiated withdraw-bank calls, pass one policy token (`--automation-token` or `--delegation-token`) and one signing authorization (`--signing-grant`).
 
 ## Mint Automation Token
 
@@ -130,6 +136,27 @@ zendfi subaccounts automation-token-mint \
 zendfi subaccounts automation-token-revoke 0f8fad5b-d9cb-469f-a165-70867728950e
 ```
 
+## Mint Signing Grant
+
+```bash
+zendfi subaccounts signing-grant-mint \
+  --subaccount-id sa_xxxxx \
+  --ttl 3600 \
+  --max-uses 25 \
+  --total-limit 500 \
+  --per-tx-limit 50 \
+  --bank-ids 9PSB7A2A2LJZ3H6Q4G8XJ6A4 \
+  --account-numbers 0123456789 \
+  --mode live \
+  --passkey-file ./passkey-signature.json
+```
+
+## Revoke Signing Grant
+
+```bash
+zendfi subaccounts signing-grant-revoke 2f8fad5b-d9cb-469f-a165-70867728950e
+```
+
 ## Close
 
 ```bash
@@ -138,7 +165,7 @@ zendfi subaccounts close sa_xxxxx
 
 ## Passkey Signature File
 
-Sensitive operations require `--passkey-file` JSON with this shape:
+Interactive signing operations require `--passkey-file` JSON with this shape:
 
 ```json
 {
