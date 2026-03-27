@@ -176,6 +176,26 @@ Freezing revokes active delegation tokens and blocks sub-account activity.
 
 ---
 
+## Unfreeze Sub-Account
+
+```http
+POST /api/v1/subaccounts/{id}/unfreeze
+```
+
+Optional body:
+
+```json
+{ "reason": "manual-review-cleared" }
+```
+
+Guardrails:
+
+- Only sub-accounts currently in `frozen` status can be unfrozen.
+- `closed` sub-accounts cannot be unfrozen.
+- Previously revoked delegation tokens are **not** reactivated. Mint new token(s) if needed.
+
+---
+
 ## Drain Sub-Account
 
 ```http
@@ -367,5 +387,6 @@ Sub-account flows emit:
 
 - Withdrawal events: `WithdrawalInitiated`, `WithdrawalFailed`, `WithdrawalCompleted`
 - Lifecycle events: `SubAccountCreated`, `SubAccountDelegationTokenMinted`, `SubAccountFrozen`, `SubAccountClosed`
+- Lifecycle events: `SubAccountCreated`, `SubAccountDelegationTokenMinted`, `SubAccountFrozen`, `SubAccountUnfrozen`, `SubAccountClosed`
 
 See [Webhooks](/api-reference/webhooks) for payload structure.

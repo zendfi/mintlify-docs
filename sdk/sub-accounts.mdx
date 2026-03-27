@@ -16,6 +16,7 @@ zendfi.getSubAccount(...)
 zendfi.getSubAccountBalance(...)
 zendfi.mintSubAccountDelegationToken(...)
 zendfi.freezeSubAccount(...)
+zendfi.unfreezeSubAccount(...)
 zendfi.drainSubAccount(...)
 zendfi.withdrawFromSubAccount(...)
 zendfi.withdrawSubAccountToBank(...)
@@ -60,6 +61,14 @@ const token = await zendfi.mintSubAccountDelegationToken(sub.id, {
 ```typescript
 await zendfi.freezeSubAccount(sub.id, { reason: 'fraud-review' });
 ```
+
+## Unfreeze
+
+```typescript
+await zendfi.unfreezeSubAccount(sub.id, { reason: 'manual-review-cleared' });
+```
+
+Unfreeze guardrails: only frozen sub-accounts can be unfrozen, and previously revoked delegation tokens remain revoked.
 
 ## Drain to Merchant Wallet
 

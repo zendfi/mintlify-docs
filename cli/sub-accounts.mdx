@@ -17,6 +17,7 @@ Use the `subaccounts` command group (alias: `sa`) to operate merchant sub-accoun
 | `zendfi subaccounts balance <id>` | Get current SOL/USDC balances |
 | `zendfi subaccounts token <id>` | Mint a scoped delegation token |
 | `zendfi subaccounts freeze <id>` | Freeze sub-account and revoke active delegation tokens |
+| `zendfi subaccounts unfreeze <id>` | Unfreeze a frozen sub-account (tokens remain revoked) |
 | `zendfi subaccounts drain <id>` | Drain funds back to merchant wallet |
 | `zendfi subaccounts withdraw <id>` | Withdraw to external wallet |
 | `zendfi subaccounts withdraw-bank <id>` | Withdraw to bank with automated proxy-email OTP flow |
@@ -61,6 +62,14 @@ zendfi subaccounts token sa_xxxxx \
 ```bash
 zendfi subaccounts freeze sa_xxxxx --reason "fraud-review"
 ```
+
+## Unfreeze
+
+```bash
+zendfi subaccounts unfreeze sa_xxxxx --reason "manual-review-cleared"
+```
+
+Previously revoked delegation tokens are not reactivated; mint new token(s) after unfreeze if required.
 
 ## Drain
 
