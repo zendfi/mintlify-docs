@@ -16,6 +16,7 @@ Use the `subaccounts` command group (alias: `sa`) to operate merchant sub-accoun
 | `zendfi subaccounts get <id>` | Get a sub-account by UUID or external ID |
 | `zendfi subaccounts balance <id>` | Get current SOL/USDC balances |
 | `zendfi subaccounts token <id>` | Mint a scoped delegation token |
+| `zendfi subaccounts token-child <id>` | Mint an attenuated child delegation token |
 | `zendfi subaccounts freeze <id>` | Freeze sub-account and revoke active delegation tokens |
 | `zendfi subaccounts unfreeze <id>` | Unfreeze a frozen sub-account (tokens remain revoked) |
 | `zendfi subaccounts drain <id>` | Drain funds back to merchant wallet |
@@ -25,6 +26,14 @@ Use the `subaccounts` command group (alias: `sa`) to operate merchant sub-accoun
 | `zendfi subaccounts automation-token-revoke <token-id>` | Revoke automation token |
 | `zendfi subaccounts signing-grant-mint` | Mint bounded signing grant for headless signing |
 | `zendfi subaccounts signing-grant-revoke <grant-id>` | Revoke signing grant |
+| `zendfi subaccounts policy-create` | Create versioned policy |
+| `zendfi subaccounts policy-dry-run` | Evaluate policy without persisting |
+| `zendfi subaccounts trigger-create` | Create reactive webhook trigger subscription |
+| `zendfi subaccounts trigger-list` | List trigger subscriptions |
+| `zendfi subaccounts intent-create` | Create execution intent |
+| `zendfi subaccounts intent-approve <intent-id>` | Approve or reject execution intent |
+| `zendfi subaccounts intent-release --signal-token <token>` | Release intent using signal token |
+| `zendfi subaccounts balance-rule-create` | Create balance automation rule |
 | `zendfi subaccounts close <id>` | Close sub-account |
 
 ## Create
@@ -56,6 +65,19 @@ zendfi subaccounts token sa_xxxxx \
   --spend-limit 100 \
   --ttl 900 \
   --whitelist 7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU \
+  --single-use \
+  --policy-version-id a6e9db6f-e264-4f9d-a4c7-7f94b18f0f34 \
+  --agent-label risk-bot-v2
+```
+
+## Mint Child Delegation Token
+
+```bash
+zendfi subaccounts token-child sa_xxxxx \
+  --parent-delegation-token satk_parent_xxxxx \
+  --scope withdraw_only \
+  --spend-limit 25 \
+  --ttl 900 \
   --single-use
 ```
 
@@ -92,7 +114,8 @@ zendfi subaccounts withdraw sa_xxxxx \
   --token Usdc \
   --mode live \
   --delegation-token satk_xxxxx \
-  --signing-grant ssgt_xxxxx
+  --signing-grant ssgt_xxxxx \
+  --execution-intent-id 89d52313-1cea-4313-80a4-23afc543287e
 ```
 
 `--signing-grant` and `--passkey-file` are mutually exclusive.
@@ -109,7 +132,8 @@ zendfi subaccounts withdraw-bank sa_xxxxx \
   --mode live \
   --signing-grant ssgt_xxxxx \
   --automation-token saatk_xxxxx \
-  --delegation-token satk_xxxxx
+  --delegation-token satk_xxxxx \
+  --execution-intent-id 89d52313-1cea-4313-80a4-23afc543287e
 ```
 
 This command mirrors split proxy-email OTP automation. No manual OTP prompt is required.
@@ -131,7 +155,10 @@ zendfi subaccounts automation-token-mint \
   --per-tx-limit 50 \
   --bank-ids 9PSB7A2A2LJZ3H6Q4G8XJ6A4 \
   --account-numbers 0123456789 \
-  --mode live
+  --mode live \
+  --policy-version-id a6e9db6f-e264-4f9d-a4c7-7f94b18f0f34 \
+  --parent-token-id c4fab649-f4f0-438f-8dc8-9737a82c59d3 \
+  --agent-label reconciliation-agent
 ```
 
 ## Revoke Automation Token
@@ -151,7 +178,13 @@ zendfi subaccounts signing-grant-mint \
   --per-tx-limit 50 \
   --bank-ids 9PSB7A2A2LJZ3H6Q4G8XJ6A4 \
   --account-numbers 0123456789 \
-  --mode live
+  --mode live \
+  --policy-version-id a6e9db6f-e264-4f9d-a4c7-7f94b18f0f34 \
+  --parent-grant-id e9ae9bc0-e640-4a2b-a7e8-d85b93b1a8a0 \
+  --active-days-utc 1,2,3,4,5 \
+  --active-start-utc 09:00 \
+  --active-end-utc 18:00 \
+  --auto-renew
 ```
 
 This command starts a browser intent, opens the approval URL, and polls until passkey approval completes.
@@ -175,6 +208,85 @@ Use `--no-open` if your environment cannot auto-open a browser.
 
 ```bash
 zendfi subaccounts signing-grant-revoke 2f8fad5b-d9cb-469f-a165-70867728950e
+```
+
+## Create Policy
+
+```bash
+zendfi subaccounts policy-create \
+  --subaccount-id sa_xxxxx \
+  --policy-type signing_grant \
+  --status active \
+  --policy-json '{"max_per_tx_usdc":100,"max_per_day_usdc":500,"allowed_modes":["live"]}'
+```
+
+## Dry Run Policy
+
+```bash
+zendfi subaccounts policy-dry-run \
+  --subaccount-id sa_xxxxx \
+  --amount 25 \
+  --mode live \
+  --daily-spend 120 \
+  --policy-json '{"max_per_tx_usdc":100,"max_per_day_usdc":500,"allowed_modes":["live"]}'
+```
+
+## Create Trigger Subscription
+
+```bash
+zendfi subaccounts trigger-create \
+  --subaccount-id sa_xxxxx \
+  --trigger-type balance_below \
+  --threshold 20 \
+  --cooldown 300
+```
+
+## List Trigger Subscriptions
+
+```bash
+zendfi subaccounts trigger-list
+```
+
+## Create Execution Intent
+
+```bash
+zendfi subaccounts intent-create \
+  --subaccount-id sa_xxxxx \
+  --intent-type withdraw_to_bank \
+  --signal-type webhook_ack \
+  --expires 900 \
+  --payload '{"bank_id":"9PSB7A2A2LJZ3H6Q4G8XJ6A4","account_number":"0123456789"}'
+```
+
+## Approve Execution Intent
+
+```bash
+zendfi subaccounts intent-approve 89d52313-1cea-4313-80a4-23afc543287e
+```
+
+Reject example:
+
+```bash
+zendfi subaccounts intent-approve 89d52313-1cea-4313-80a4-23afc543287e --reject --reason "limit exceeded"
+```
+
+## Release Execution Intent By Signal
+
+```bash
+zendfi subaccounts intent-release --signal-token sge_xxxxx
+```
+
+## Create Balance Rule
+
+```bash
+zendfi subaccounts balance-rule-create \
+  --subaccount-id sa_xxxxx \
+  --rule-name keep-hot-wallet-funded \
+  --rule-type topup_below \
+  --threshold 50 \
+  --action-amount 100 \
+  --max-actions-per-day 6 \
+  --cooldown 300
 ```
 
 ## Close

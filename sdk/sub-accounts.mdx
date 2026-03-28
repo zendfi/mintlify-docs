@@ -15,6 +15,7 @@ zendfi.listSubAccounts()
 zendfi.getSubAccount(...)
 zendfi.getSubAccountBalance(...)
 zendfi.mintSubAccountDelegationToken(...)
+zendfi.mintSubAccountChildDelegationToken(...)
 zendfi.freezeSubAccount(...)
 zendfi.unfreezeSubAccount(...)
 zendfi.drainSubAccount(...)
@@ -26,6 +27,15 @@ zendfi.createSubAccountSigningGrant(...)
 zendfi.startSubAccountSigningGrantBrowserIntent(...)
 zendfi.pollSubAccountSigningGrantBrowserIntent(...)
 zendfi.revokeSubAccountSigningGrant(...)
+zendfi.createSubAccountPolicy(...)
+zendfi.dryRunSubAccountPolicy(...)
+zendfi.getSubAccountPolicy(...)
+zendfi.createSubAccountWebhookTriggerSubscription(...)
+zendfi.listSubAccountWebhookTriggerSubscriptions()
+zendfi.createSubAccountExecutionIntent(...)
+zendfi.approveSubAccountExecutionIntent(...)
+zendfi.releaseSubAccountExecutionIntentBySignal(...)
+zendfi.createSubAccountBalanceRule(...)
 zendfi.closeSubAccount(...)
 ```
 
@@ -57,6 +67,21 @@ const token = await zendfi.mintSubAccountDelegationToken(sub.id, {
   expires_in_seconds: 900,
   whitelist: ['7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU'],
   single_use: true,
+  policy_version_id: 'a6e9db6f-e264-4f9d-a4c7-7f94b18f0f34',
+  agent_label: 'risk-bot-v2',
+});
+```
+
+## Mint Child Delegation Token
+
+```typescript
+const child = await zendfi.mintSubAccountChildDelegationToken(sub.id, {
+  parent_delegation_token: token.delegation_token,
+  scope: 'withdraw_only',
+  spend_limit_usdc: 25,
+  expires_in_seconds: 900,
+  single_use: true,
+  policy_version_id: 'a6e9db6f-e264-4f9d-a4c7-7f94b18f0f34',
 });
 ```
 
@@ -95,6 +120,7 @@ await zendfi.withdrawFromSubAccount(sub.id, {
   mode: 'live',
   delegation_token: token.delegation_token,
   signing_grant: 'ssgt_xxxxx',
+  execution_intent_id: '89d52313-1cea-4313-80a4-23afc543287e',
 });
 ```
 
@@ -113,6 +139,7 @@ await zendfi.withdrawSubAccountToBank(sub.id, {
   signing_grant: 'ssgt_xxxxx',
   automation_token: 'saatk_xxxxx',
   delegation_token: token.delegation_token,
+  execution_intent_id: '89d52313-1cea-4313-80a4-23afc543287e',
 });
 ```
 
@@ -136,6 +163,9 @@ const automation = await zendfi.createSubAccountAutomationToken({
   allowed_bank_ids: ['9PSB7A2A2LJZ3H6Q4G8XJ6A4'],
   allowed_account_numbers: ['0123456789'],
   mode: 'live',
+  policy_version_id: 'a6e9db6f-e264-4f9d-a4c7-7f94b18f0f34',
+  parent_token_id: 'c4fab649-f4f0-438f-8dc8-9737a82c59d3',
+  agent_label: 'reconciliation-agent',
 });
 ```
 
@@ -157,7 +187,90 @@ const grant = await zendfi.createSubAccountSigningGrant({
   allowed_bank_ids: ['9PSB7A2A2LJZ3H6Q4G8XJ6A4'],
   allowed_account_numbers: ['0123456789'],
   mode: 'live',
+  policy_version_id: 'a6e9db6f-e264-4f9d-a4c7-7f94b18f0f34',
+  parent_grant_id: 'e9ae9bc0-e640-4a2b-a7e8-d85b93b1a8a0',
+  active_days_utc: [1, 2, 3, 4, 5],
+  active_start_time_utc: '09:00',
+  active_end_time_utc: '18:00',
+  auto_renew: true,
+  agent_label: 'ops-approver',
   passkey_signature,
+});
+```
+
+## Policies
+
+```typescript
+const policy = await zendfi.createSubAccountPolicy({
+  sub_account_id: sub.id,
+  policy_type: 'signing_grant',
+  status: 'active',
+  policy_json: {
+    max_per_tx_usdc: 100,
+    max_per_day_usdc: 500,
+    allowed_modes: ['live'],
+    allowed_weekdays_utc: [1, 2, 3, 4, 5],
+    active_start_utc: '09:00',
+    active_end_utc: '18:00',
+  },
+});
+
+const dryRun = await zendfi.dryRunSubAccountPolicy({
+  policy_json: policy.policy_json,
+  amount_usdc: 25,
+  mode: 'live',
+  sub_account_id: sub.id,
+  daily_spend_usdc: 100,
+});
+
+const fetched = await zendfi.getSubAccountPolicy(policy.policy_id);
+```
+
+## Webhook Triggers
+
+```typescript
+await zendfi.createSubAccountWebhookTriggerSubscription({
+  sub_account_id: sub.id,
+  trigger_type: 'balance_below',
+  threshold_value_usdc: 20,
+  cooldown_seconds: 300,
+});
+
+const triggers = await zendfi.listSubAccountWebhookTriggerSubscriptions();
+```
+
+## Execution Intents
+
+```typescript
+const intent = await zendfi.createSubAccountExecutionIntent({
+  sub_account_id: sub.id,
+  intent_type: 'withdraw_to_bank',
+  requires_signal_type: 'webhook_ack',
+  payload: {
+    bank_id: '9PSB7A2A2LJZ3H6Q4G8XJ6A4',
+    account_number: '0123456789',
+  },
+  expires_in_seconds: 900,
+});
+
+await zendfi.approveSubAccountExecutionIntent(intent.intent_id, { approve: true });
+
+if (intent.signal_token) {
+  await zendfi.releaseSubAccountExecutionIntentBySignal({ signal_token: intent.signal_token });
+}
+```
+
+## Balance Rules
+
+```typescript
+await zendfi.createSubAccountBalanceRule({
+  sub_account_id: sub.id,
+  rule_name: 'keep-hot-wallet-funded',
+  rule_type: 'topup_below',
+  threshold_usdc: 50,
+  action_amount_usdc: 100,
+  max_actions_per_day: 6,
+  cooldown_seconds: 300,
 });
 ```
 

@@ -141,6 +141,22 @@ POST /api/v1/subaccounts/{id}/session-key
   If true, token auto-revokes after first successful authorized use.
 </ParamField>
 
+<ParamField body="policy_version_id" type="string">
+  Optional policy version UUID attached to this token.
+</ParamField>
+
+<ParamField body="agent_label" type="string">
+  Optional actor label for audit attribution.
+</ParamField>
+
+<ParamField body="agent_public_key" type="string">
+  Optional actor public key for attribution.
+</ParamField>
+
+<ParamField body="agent_metadata" type="object">
+  Optional structured actor metadata.
+</ParamField>
+
 ### Response
 
 ```json
@@ -157,6 +173,50 @@ POST /api/v1/subaccounts/{id}/session-key
 <Warning>
   `delegation_token` is returned once. Treat it like a secret and never log it.
 </Warning>
+
+---
+
+## Mint Child Delegation Token
+
+```http
+POST /api/v1/subaccounts/{id}/session-key/child
+```
+
+Mints an attenuated child token from an existing parent delegation token.
+
+### Body
+
+```json
+{
+  "parent_delegation_token": "satk_parent_xxxxx",
+  "scope": "withdraw_only",
+  "spend_limit_usdc": 25,
+  "expires_in_seconds": 900,
+  "whitelist": ["7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU"],
+  "single_use": true,
+  "policy_version_id": "a6e9db6f-e264-4f9d-a4c7-7f94b18f0f34",
+  "agent_label": "risk-bot-v2",
+  "agent_public_key": "ed25519:...",
+  "agent_metadata": {
+    "workflow": "vendor-payout"
+  }
+}
+```
+
+### Response
+
+```json
+{
+  "token_id": "d5a8012b-95ca-4e94-a0b6-e4674df22e4e",
+  "parent_token_id": "8fe55f3b-7bd5-4768-a6df-6b28dbad1e61",
+  "subaccount_id": "sa_7b1w9j2k4m8p",
+  "scope": "withdraw_only",
+  "expires_at": "2026-03-26T18:15:00Z",
+  "spend_limit_usdc": 25,
+  "delegation_depth": 1,
+  "delegation_token": "satk_child_xxxxx"
+}
+```
 
 ---
 
@@ -237,7 +297,8 @@ POST /api/v1/subaccounts/{id}/withdraw
   "token": "Usdc",
   "mode": "live",
   "delegation_token": "satk_xxxxx",
-  "signing_grant": "ssgt_xxxxx"
+  "signing_grant": "ssgt_xxxxx",
+  "execution_intent_id": "89d52313-1cea-4313-80a4-23afc543287e"
 }
 ```
 
@@ -265,7 +326,8 @@ Creates a PAJ offramp order and automatically completes OTP verification using t
   "mode": "live",
   "signing_grant": "ssgt_xxxxx",
   "automation_token": "saatk_xxxxx",
-  "delegation_token": "satk_xxxxx"
+  "delegation_token": "satk_xxxxx",
+  "execution_intent_id": "89d52313-1cea-4313-80a4-23afc543287e"
 }
 ```
 
@@ -321,7 +383,14 @@ Requires merchant dashboard session auth. Use this endpoint to mint bounded head
   "per_tx_limit_usdc": 50,
   "allowed_bank_ids": ["9PSB7A2A2LJZ3H6Q4G8XJ6A4"],
   "allowed_account_numbers": ["0123456789"],
-  "mode": "live"
+  "mode": "live",
+  "policy_version_id": "a6e9db6f-e264-4f9d-a4c7-7f94b18f0f34",
+  "parent_token_id": "c4fab649-f4f0-438f-8dc8-9737a82c59d3",
+  "agent_label": "reconciliation-agent",
+  "agent_public_key": "ed25519:...",
+  "agent_metadata": {
+    "pipeline": "nightly-settlement"
+  }
 }
 ```
 
@@ -370,6 +439,17 @@ Requires merchant dashboard session auth. Use this endpoint to perform one inter
   "allowed_bank_ids": ["9PSB7A2A2LJZ3H6Q4G8XJ6A4"],
   "allowed_account_numbers": ["0123456789"],
   "mode": "live",
+  "policy_version_id": "a6e9db6f-e264-4f9d-a4c7-7f94b18f0f34",
+  "parent_grant_id": "e9ae9bc0-e640-4a2b-a7e8-d85b93b1a8a0",
+  "active_days_utc": [1, 2, 3, 4, 5],
+  "active_start_time_utc": "09:00",
+  "active_end_time_utc": "18:00",
+  "auto_renew": true,
+  "agent_label": "ops-approver",
+  "agent_public_key": "ed25519:...",
+  "agent_metadata": {
+    "team": "ops"
+  },
   "passkey_signature": {
     "credential_id": "...",
     "authenticator_data": [1,2,3],
@@ -531,6 +611,114 @@ Immediately revokes the automation token.
 
 ---
 
+## Create Policy Version
+
+```http
+POST /api/v1/merchants/me/subaccounts/policies
+```
+
+Creates a versioned policy document that can be attached to delegation tokens, automation tokens, signing grants, triggers, intents, and balance rules.
+
+### Body
+
+```json
+{
+  "sub_account_id": "sa_7b1w9j2k4m8p",
+  "policy_type": "signing_grant",
+  "status": "active",
+  "policy_json": {
+    "max_per_tx_usdc": 100,
+    "max_per_day_usdc": 500,
+    "allowed_modes": ["live"],
+    "allowed_weekdays_utc": [1, 2, 3, 4, 5],
+    "active_start_utc": "09:00",
+    "active_end_utc": "18:00"
+  }
+}
+```
+
+---
+
+## Dry Run Policy
+
+```http
+POST /api/v1/merchants/me/subaccounts/policies/dry-run
+```
+
+Evaluates a policy document without persisting it.
+
+---
+
+## Get Policy
+
+```http
+GET /api/v1/merchants/me/subaccounts/policies/{policy_id}
+```
+
+---
+
+## Create Webhook Trigger Subscription
+
+```http
+POST /api/v1/merchants/me/subaccounts/webhook-triggers
+```
+
+Supported trigger types:
+
+- `balance_below`
+- `balance_above`
+- `threshold_crossed`
+- `funds_arrival`
+- `daily_withdrawal_above`
+
+---
+
+## List Webhook Trigger Subscriptions
+
+```http
+GET /api/v1/merchants/me/subaccounts/webhook-triggers
+```
+
+---
+
+## Create Execution Intent
+
+```http
+POST /api/v1/merchants/me/subaccounts/execution-intents
+```
+
+Creates a maker-checker style execution gate.
+
+---
+
+## Approve Execution Intent
+
+```http
+POST /api/v1/merchants/me/subaccounts/execution-intents/{intent_id}/approve
+```
+
+---
+
+## Release Execution Intent by Signal
+
+```http
+POST /api/v1/subaccounts/execution-intents/release
+```
+
+Releases a pending or approved intent using its one-time signal token.
+
+---
+
+## Create Balance Rule
+
+```http
+POST /api/v1/merchants/me/subaccounts/balance-rules
+```
+
+Creates an automated balance action rule (`topup_below` or `drain_above`).
+
+---
+
 ## Close Sub-Account
 
 ```http
@@ -546,7 +734,8 @@ Closes the sub-account, deactivates its wallet, and revokes associated delegatio
 Sub-account flows emit:
 
 - Withdrawal events: `WithdrawalInitiated`, `WithdrawalFailed`, `WithdrawalCompleted`
-- Lifecycle events: `SubAccountCreated`, `SubAccountDelegationTokenMinted`, `SubAccountFrozen`, `SubAccountClosed`
 - Lifecycle events: `SubAccountCreated`, `SubAccountDelegationTokenMinted`, `SubAccountFrozen`, `SubAccountUnfrozen`, `SubAccountClosed`
+- Reactive controls: `SubAccountBalanceLow`, `SubAccountBalanceHigh`, `SubAccountThresholdCrossed`
+- Execution gates: `SubAccountExecutionGatePending`, `SubAccountExecutionGateReleased`
 
 See [Webhooks](/api-reference/webhooks) for payload structure.
