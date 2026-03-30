@@ -321,7 +321,7 @@ Creates a PAJ offramp order and automatically completes OTP verification using t
 ```json
 {
   "amount_usdc": 25,
-  "bank_id": "9PSB7A2A2LJZ3H6Q4G8XJ6A4",
+  "bank_id": "GTB",
   "account_number": "0123456789",
   "mode": "live",
   "signing_grant": "ssgt_xxxxx",
@@ -330,6 +330,8 @@ Creates a PAJ offramp order and automatically completes OTP verification using t
   "execution_intent_id": "89d52313-1cea-4313-80a4-23afc543287e"
 }
 ```
+
+`bank_id` accepts a bank identifier value: PAJ bank id, bank code, or bank name.
 
 ### Response
 
@@ -381,7 +383,7 @@ Requires merchant dashboard session auth. Use this endpoint to mint bounded head
   "max_uses": 25,
   "total_limit_usdc": 500,
   "per_tx_limit_usdc": 50,
-  "allowed_bank_ids": ["9PSB7A2A2LJZ3H6Q4G8XJ6A4"],
+  "allowed_bank_ids": ["GTB"],
   "allowed_account_numbers": ["0123456789"],
   "mode": "live",
   "policy_version_id": "a6e9db6f-e264-4f9d-a4c7-7f94b18f0f34",
@@ -406,7 +408,7 @@ Requires merchant dashboard session auth. Use this endpoint to mint bounded head
   "max_uses": 25,
   "total_limit_usdc": 500,
   "per_tx_limit_usdc": 50,
-  "allowed_bank_ids": ["9PSB7A2A2LJZ3H6Q4G8XJ6A4"],
+  "allowed_bank_ids": ["GTB"],
   "allowed_account_numbers": ["0123456789"],
   "mode": "live",
   "created_at": "2026-03-26T19:00:00Z"
@@ -436,7 +438,7 @@ Requires merchant dashboard session auth. Use this endpoint to perform one inter
   "max_uses": 25,
   "total_limit_usdc": 500,
   "per_tx_limit_usdc": 50,
-  "allowed_bank_ids": ["9PSB7A2A2LJZ3H6Q4G8XJ6A4"],
+  "allowed_bank_ids": ["GTB"],
   "allowed_account_numbers": ["0123456789"],
   "mode": "live",
   "policy_version_id": "a6e9db6f-e264-4f9d-a4c7-7f94b18f0f34",
@@ -471,7 +473,7 @@ Requires merchant dashboard session auth. Use this endpoint to perform one inter
   "max_uses": 25,
   "total_limit_usdc": 500,
   "per_tx_limit_usdc": 50,
-  "allowed_bank_ids": ["9PSB7A2A2LJZ3H6Q4G8XJ6A4"],
+  "allowed_bank_ids": ["GTB"],
   "allowed_account_numbers": ["0123456789"],
   "mode": "live",
   "created_at": "2026-03-26T19:00:00Z"
@@ -501,7 +503,7 @@ Recommended API-key flow for CLI/SDK parity with merchant dashboard UX. This cre
   "max_uses": 25,
   "total_limit_usdc": 500,
   "per_tx_limit_usdc": 50,
-  "allowed_bank_ids": ["9PSB7A2A2LJZ3H6Q4G8XJ6A4"],
+  "allowed_bank_ids": ["GTB"],
   "allowed_account_numbers": ["0123456789"],
   "mode": "live"
 }
@@ -557,7 +559,7 @@ Polls intent status. On approval, this returns the minted `signing_grant` exactl
     "max_uses": 25,
     "total_limit_usdc": 500,
     "per_tx_limit_usdc": 50,
-    "allowed_bank_ids": ["9PSB7A2A2LJZ3H6Q4G8XJ6A4"],
+    "allowed_bank_ids": ["GTB"],
     "allowed_account_numbers": ["0123456789"],
     "mode": "live",
     "created_at": "2026-03-26T19:00:00Z"

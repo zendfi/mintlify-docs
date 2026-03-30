@@ -270,7 +270,10 @@ interface BankAccountSplitRecipient extends SplitRecipientBase {
   recipient_type: 'bank_account';
   recipient_account_name: string;   // Account holder name
   recipient_bank_account: string;   // Account number
-  recipient_bank_id: string;        // Bank routing code
+  recipient_bank_id?: string;       // Bank identifier (PAJ id, bank code, or bank name)
+  recipient_bank?: string;          // alias for recipient_bank_id
+  bank_identifier?: string;         // alias for recipient_bank_id
+  bank_code?: string;               // alias for recipient_bank_id
   recipient_email: string;          // For OTP verification
 }
 

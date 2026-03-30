@@ -144,7 +144,7 @@ const link = await zendfi.createPaymentLink({
       percentage: 70,
       recipient_account_name: 'John Okonkwo',
       recipient_bank_account: '0123456789',
-      recipient_bank_id: 'GTB',   // Guaranty Trust Bank
+      recipient_bank_id: 'GTB',   // bank identifier (id/code/name)
       recipient_email: 'john@contractor.com',
     },
     {
@@ -161,6 +161,8 @@ console.log(link.url);
 // – 70% (₦...) USDC → PAJ → John's GTB account
 // – 30% direct blockchain transfer to agent wallet
 ```
+
+For bank recipients, the SDK accepts `recipient_bank_id` plus aliases `recipient_bank`, `bank_identifier`, and `bank_code`.
 
 #### With a pre-filled customer object
 

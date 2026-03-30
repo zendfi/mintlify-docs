@@ -133,7 +133,7 @@ await zendfi.withdrawFromSubAccount(sub.id, {
 ```typescript
 await zendfi.withdrawSubAccountToBank(sub.id, {
   amount_usdc: 25,
-  bank_id: '9PSB7A2A2LJZ3H6Q4G8XJ6A4',
+  bank_id: 'GTB',
   account_number: '0123456789',
   mode: 'live',
   signing_grant: 'ssgt_xxxxx',
@@ -142,6 +142,8 @@ await zendfi.withdrawSubAccountToBank(sub.id, {
   execution_intent_id: '89d52313-1cea-4313-80a4-23afc543287e',
 });
 ```
+
+`bank_id` accepts a bank identifier value (PAJ bank id, bank code, or bank name).
 
 This method mirrors split bank-withdraw proxy-email OTP automation, so no manual OTP entry is required in your integration.
 
@@ -160,7 +162,7 @@ const automation = await zendfi.createSubAccountAutomationToken({
   max_uses: 25,
   total_limit_usdc: 500,
   per_tx_limit_usdc: 50,
-  allowed_bank_ids: ['9PSB7A2A2LJZ3H6Q4G8XJ6A4'],
+  allowed_bank_ids: ['GTB'],
   allowed_account_numbers: ['0123456789'],
   mode: 'live',
   policy_version_id: 'a6e9db6f-e264-4f9d-a4c7-7f94b18f0f34',
@@ -184,7 +186,7 @@ const grant = await zendfi.createSubAccountSigningGrant({
   max_uses: 25,
   total_limit_usdc: 500,
   per_tx_limit_usdc: 50,
-  allowed_bank_ids: ['9PSB7A2A2LJZ3H6Q4G8XJ6A4'],
+  allowed_bank_ids: ['GTB'],
   allowed_account_numbers: ['0123456789'],
   mode: 'live',
   policy_version_id: 'a6e9db6f-e264-4f9d-a4c7-7f94b18f0f34',
@@ -247,7 +249,7 @@ const intent = await zendfi.createSubAccountExecutionIntent({
   intent_type: 'withdraw_to_bank',
   requires_signal_type: 'webhook_ack',
   payload: {
-    bank_id: '9PSB7A2A2LJZ3H6Q4G8XJ6A4',
+    bank_id: 'GTB',
     account_number: '0123456789',
   },
   expires_in_seconds: 900,

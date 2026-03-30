@@ -127,7 +127,7 @@ zendfi subaccounts withdraw sa_xxxxx \
 ```bash
 zendfi subaccounts withdraw-bank sa_xxxxx \
   --amount 25 \
-  --bank-id 9PSB7A2A2LJZ3H6Q4G8XJ6A4 \
+  --bank-id GTB \
   --account-number 0123456789 \
   --mode live \
   --signing-grant ssgt_xxxxx \
@@ -144,6 +144,8 @@ This command mirrors split proxy-email OTP automation. No manual OTP prompt is r
 
 For API-key initiated withdraw-bank calls, pass one policy token (`--automation-token` or `--delegation-token`) and one signing authorization (`--signing-grant`).
 
+`--bank-id` accepts a bank identifier value (PAJ bank id, bank code, or bank name).
+
 ## Mint Automation Token
 
 ```bash
@@ -153,7 +155,7 @@ zendfi subaccounts automation-token-mint \
   --max-uses 25 \
   --total-limit 500 \
   --per-tx-limit 50 \
-  --bank-ids 9PSB7A2A2LJZ3H6Q4G8XJ6A4 \
+  --bank-ids GTB \
   --account-numbers 0123456789 \
   --mode live \
   --policy-version-id a6e9db6f-e264-4f9d-a4c7-7f94b18f0f34 \
@@ -176,7 +178,7 @@ zendfi subaccounts signing-grant-mint \
   --max-uses 25 \
   --total-limit 500 \
   --per-tx-limit 50 \
-  --bank-ids 9PSB7A2A2LJZ3H6Q4G8XJ6A4 \
+  --bank-ids GTB \
   --account-numbers 0123456789 \
   --mode live \
   --policy-version-id a6e9db6f-e264-4f9d-a4c7-7f94b18f0f34 \
@@ -255,7 +257,7 @@ zendfi subaccounts intent-create \
   --intent-type withdraw_to_bank \
   --signal-type webhook_ack \
   --expires 900 \
-  --payload '{"bank_id":"9PSB7A2A2LJZ3H6Q4G8XJ6A4","account_number":"0123456789"}'
+  --payload '{"bank_id":"GTB","account_number":"0123456789"}'
 ```
 
 ## Approve Execution Intent

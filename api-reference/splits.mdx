@@ -67,7 +67,7 @@ curl -X POST https://api.zendfi.tech/api/v1/payment-links \
         "recipient_type": "bank_account",
         "recipient_account_name": "Acme Corp",
         "recipient_bank_account": "1234567890",
-        "recipient_bank_id": "gt_bank",
+        "recipient_bank_id": "GTB",
         "recipient_email": "payments@acme.com",
         "fixed_amount_usd": 40.00,
         "split_order": 2
@@ -142,7 +142,11 @@ const link = await zendfi.createPaymentLink({
 </ParamField>
 
 <ParamField body="recipient_bank_id" type="string" required>
-  Bank identifier code (e.g., `gt_bank` for GuarantyCo, `access_bank` for Access Bank).
+  Bank identifier (PAJ bank id, bank code, or bank name). Example values: `GTB`, `Access Bank`, `9PSB7A2A2LJZ3H6Q4G8XJ6A4`.
+</ParamField>
+
+<ParamField body="recipient_bank / bank_identifier / bank_code" type="string">
+  Optional aliases accepted by the API and SDK; normalized internally to `recipient_bank_id`.
 </ParamField>
 
 <ParamField body="recipient_email" type="string">
@@ -356,7 +360,7 @@ The following rules are enforced at payment link creation:
 - No duplicate bank accounts (for bank type)
 - Each recipient must have exactly one of: `percentage` or `fixed_amount_usd`
 - Wallet-type recipients must have `recipient_wallet` field
-- Bank-type recipients must have `recipient_account_name`, `recipient_bank_account`, and `recipient_bank_id`
+- Bank-type recipients must have `recipient_account_name`, `recipient_bank_account`, and a bank identifier (`recipient_bank_id` or alias fields)
 </Warning>
 
 ### Amount Validation
