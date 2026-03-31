@@ -164,6 +164,22 @@ console.log(link.url);
 
 For bank recipients, the SDK accepts `recipient_bank_id` plus aliases `recipient_bank`, `bank_identifier`, and `bank_code`.
 
+For wallet recipients, you can target a sub-account directly with `sub_account_id` (or alias `recipient_sub_account`) instead of `recipient_wallet`.
+
+```typescript
+const link = await zendfi.createPaymentLink({
+  amount: 100,
+  description: 'Fund operations sub-account',
+  split_recipients: [
+    {
+      recipient_type: 'wallet',
+      sub_account_id: 'sa_7b1w9j2k4m8p',
+      // percentage optional for a single recipient (defaults to 100%)
+    },
+  ],
+});
+```
+
 #### With a pre-filled customer object
 
 When you supply a `customer` object the checkout page skips the email / info

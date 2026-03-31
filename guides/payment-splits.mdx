@@ -91,11 +91,15 @@ Each recipient in the `split_recipients` array accepts:
 
 | Field | Type | Description |
 |---|---|---|
-| `recipient_wallet` | `string` | Solana wallet address to receive funds |
+| `recipient_wallet` | `string` | Solana wallet address to receive funds (required unless `sub_account_id` is provided) |
+| `sub_account_id` | `string` | Sub-account external ID or UUID (routes payout to that sub-account wallet) |
+| `recipient_sub_account` | `string` | Alias for `sub_account_id` |
 | `recipient_name` | `string` | (Optional) Human-readable label for this recipient |
 | `percentage` | `number` | (Optional) Percentage of the payment (0-100) |
 | `fixed_amount_usd` | `number` | (Optional) Fixed amount in USD |
 | `split_order` | `number` | (Optional) Order in which splits are executed |
+
+If you provide a single split recipient and omit both `percentage` and `fixed_amount_usd`, ZendFi defaults that recipient to 100%.
 
 ## Retrieve Splits
 

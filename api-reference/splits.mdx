@@ -76,6 +76,22 @@ curl -X POST https://api.zendfi.tech/api/v1/payment-links \
   }'
 ```
 
+```bash cURL — fund a sub-account directly
+curl -X POST https://api.zendfi.tech/api/v1/payment-links \
+  -H "Authorization: Bearer zfi_test_your_key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "amount": 100.00,
+    "description": "Fund treasury sub-account",
+    "split_recipients": [
+      {
+        "recipient_type": "wallet",
+        "sub_account_id": "sa_7b1w9j2k4m8p"
+      }
+    ]
+  }'
+```
+
 ```typescript SDK
 const link = await zendfi.createPaymentLink({
   amount: 100.00,
@@ -111,8 +127,16 @@ const link = await zendfi.createPaymentLink({
 
 ### For Wallet Recipients (`recipient_type: "wallet"`)
 
-<ParamField body="recipient_wallet" type="string" required>
-  Solana wallet address to receive on-chain funds.
+<ParamField body="recipient_wallet" type="string">
+  Solana wallet address to receive on-chain funds. Required when `sub_account_id` is not provided.
+</ParamField>
+
+<ParamField body="sub_account_id" type="string">
+  Sub-account external ID or UUID. When set, ZendFi resolves and uses the sub-account wallet internally.
+</ParamField>
+
+<ParamField body="recipient_sub_account" type="string">
+  Alias for `sub_account_id`.
 </ParamField>
 
 <ParamField body="recipient_name" type="string">
@@ -126,6 +150,10 @@ const link = await zendfi.createPaymentLink({
 <ParamField body="fixed_amount_usd" type="number">
   Fixed dollar amount to route. Use either `percentage` or `fixed_amount_usd`, not both.
 </ParamField>
+
+<Note>
+If the split has a single recipient and both `percentage` and `fixed_amount_usd` are omitted, ZendFi defaults that recipient to 100%.
+</Note>
 
 <ParamField body="split_order" type="integer" default="0">
   Processing order for this split (lower numbers process first).
@@ -359,7 +387,7 @@ The following rules are enforced at payment link creation:
 - No duplicate wallet addresses (for wallet type)
 - No duplicate bank accounts (for bank type)
 - Each recipient must have exactly one of: `percentage` or `fixed_amount_usd`
-- Wallet-type recipients must have `recipient_wallet` field
+- Wallet-type recipients must have `recipient_wallet` or `sub_account_id`
 - Bank-type recipients must have `recipient_account_name`, `recipient_bank_account`, and a bank identifier (`recipient_bank_id` or alias fields)
 </Warning>
 
