@@ -115,6 +115,63 @@ GET /api/v1/subaccounts/{id}/balance
 
 ---
 
+## Get Merchant Sub-Account TTL Policy
+
+```http
+GET /api/v1/subaccounts/ttl-policy
+```
+
+Returns effective TTL ceilings, merchant overrides, and platform hard caps.
+
+### Response
+
+```json
+{
+  "merchant_id": "e9c1c4dc-7aa5-4ad5-90af-6e7035f4503d",
+  "policy": {
+    "effective": {
+      "signing_grant_max_ttl_seconds": 1209600,
+      "automation_token_max_ttl_seconds": 1209600,
+      "child_delegation_max_ttl_seconds": 259200
+    },
+    "merchant_overrides": {
+      "signing_grant_max_ttl_seconds": 1209600,
+      "automation_token_max_ttl_seconds": 1209600,
+      "child_delegation_max_ttl_seconds": 259200
+    },
+    "platform_hard_caps": {
+      "signing_grant_max_ttl_seconds": 7776000,
+      "automation_token_max_ttl_seconds": 7776000,
+      "child_delegation_max_ttl_seconds": 7776000
+    }
+  }
+}
+```
+
+---
+
+## Update Merchant Sub-Account TTL Policy
+
+```http
+POST /api/v1/subaccounts/ttl-policy
+```
+
+Updates merchant-specific TTL ceilings. Each provided value must be within the platform hard-cap range.
+
+### Body
+
+```json
+{
+  "signing_grant_max_ttl_seconds": 1209600,
+  "automation_token_max_ttl_seconds": 1209600,
+  "child_delegation_max_ttl_seconds": 259200
+}
+```
+
+Response shape matches `GET /api/v1/subaccounts/ttl-policy`.
+
+---
+
 ## Mint Delegation Token
 
 ```http
@@ -183,6 +240,8 @@ POST /api/v1/subaccounts/{id}/session-key/child
 ```
 
 Mints an attenuated child token from an existing parent delegation token.
+
+`expires_in_seconds` must be within the merchant effective child-delegation TTL ceiling and cannot exceed parent token expiry.
 
 ### Body
 
@@ -374,6 +433,8 @@ POST /api/v1/merchants/me/subaccounts/automation-tokens
 
 Requires merchant dashboard session auth. Use this endpoint to mint bounded headless automation credentials for `withdraw-bank`.
 
+`ttl_seconds` must be within the merchant effective automation-token TTL ceiling.
+
 ### Body
 
 ```json
@@ -428,6 +489,8 @@ POST /api/v1/merchants/me/subaccounts/signing-grants
 ```
 
 Requires merchant dashboard session auth. Use this endpoint to perform one interactive passkey approval and mint bounded headless signing credentials for `withdraw-bank`.
+
+`ttl_seconds` must be within the merchant effective signing-grant TTL ceiling.
 
 ### Body
 
@@ -493,6 +556,8 @@ POST /api/v1/subaccounts/signing-grants/browser-intents/start
 ```
 
 Recommended API-key flow for CLI/SDK parity with merchant dashboard UX. This creates a short-lived browser approval intent and returns a one-time approval URL.
+
+`ttl_seconds` must be within the merchant effective signing-grant TTL ceiling.
 
 ### Body
 

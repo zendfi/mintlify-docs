@@ -15,6 +15,8 @@ Use the `subaccounts` command group (alias: `sa`) to operate merchant sub-accoun
 | `zendfi subaccounts list` | List all sub-accounts |
 | `zendfi subaccounts get <id>` | Get a sub-account by UUID or external ID |
 | `zendfi subaccounts balance <id>` | Get current SOL/USDC balances |
+| `zendfi subaccounts ttl-policy-get` | Get merchant sub-account TTL policy |
+| `zendfi subaccounts ttl-policy-set` | Update merchant sub-account TTL policy overrides |
 | `zendfi subaccounts token <id>` | Mint a scoped delegation token |
 | `zendfi subaccounts token-child <id>` | Mint an attenuated child delegation token |
 | `zendfi subaccounts freeze <id>` | Freeze sub-account and revoke active delegation tokens |
@@ -56,6 +58,21 @@ zendfi subaccounts list
 ```bash
 zendfi subaccounts balance sa_xxxxx
 ```
+
+## TTL Policy (Merchant)
+
+```bash
+zendfi subaccounts ttl-policy-get
+```
+
+```bash
+zendfi subaccounts ttl-policy-set \
+  --signing-grant-max-ttl 1209600 \
+  --automation-token-max-ttl 1209600 \
+  --child-delegation-max-ttl 259200
+```
+
+Token and grant TTL inputs are validated against these effective policy values.
 
 ## Mint Delegation Token
 
@@ -205,6 +222,8 @@ zendfi subaccounts signing-grant-mint \
 ```
 
 Use `--no-open` if your environment cannot auto-open a browser.
+
+`--ttl` must be within merchant TTL policy bounds.
 
 ## Revoke Signing Grant
 
