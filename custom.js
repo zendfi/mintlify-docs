@@ -2,9 +2,8 @@
  * ZendFi Docs — Premium UI Enhancements
  *
  * 1. Collapsible sidebar toggle (ported from x0-custom.js)
- * 2. Lenis smooth scrolling (CDN) with CSS fallback
- * 3. Scroll progress indicator bar
- * 4. Back-to-top floating button
+ * 2. Scroll progress indicator bar
+ * 3. Back-to-top floating button
  */
 (function () {
   'use strict';
@@ -12,7 +11,6 @@
   if (window.__zfi_custom_init) return;
   window.__zfi_custom_init = true;
 
-  var LENIS_CDN = 'https://cdn.jsdelivr.net/npm/lenis@1.1.18/dist/lenis.min.js';
   var STORAGE_KEY = 'zfi-sidebar-collapsed';
 
   // ─────────────────────────────────────────────
@@ -62,66 +60,7 @@
   }
 
   // ─────────────────────────────────────────────
-  //  2. Lenis Smooth Scrolling
-  // ─────────────────────────────────────────────
-
-  function loadLenis() {
-    if (window.Lenis) { initLenis(); return; }
-
-    var s = document.createElement('script');
-    s.src = LENIS_CDN;
-    s.onload = initLenis;
-    s.onerror = function () {
-      console.warn('[zfi] Lenis CDN failed; CSS smooth-scroll fallback active.');
-    };
-    document.head.appendChild(s);
-  }
-
-  function initLenis() {
-    if (window.__zfi_lenis) return;
-    if (typeof window.Lenis === 'undefined') return;
-
-    var lenis = new window.Lenis({
-      duration: 1.2,
-      easing: function (t) { return Math.min(1, 1.001 - Math.pow(2, -10 * t)); },
-      orientation: 'vertical',
-      gestureOrientation: 'vertical',
-      smoothWheel: true,
-      wheelMultiplier: 1,
-      touchMultiplier: 2,
-      infinite: false,
-    });
-
-    window.__zfi_lenis = lenis;
-
-    function raf(time) { lenis.raf(time); requestAnimationFrame(raf); }
-    requestAnimationFrame(raf);
-
-    // Anchor link interception
-    document.addEventListener('click', function (e) {
-      var link = e.target.closest('a[href^="#"]');
-      if (!link) return;
-      var hash = link.getAttribute('href');
-      if (!hash || hash === '#') return;
-
-      var target;
-      try { target = document.querySelector(hash); } catch (_) { return; }
-      if (!target) return;
-
-      e.preventDefault();
-      lenis.scrollTo(target, { offset: -100, duration: 1.2 });
-      if (history.pushState) history.pushState(null, null, hash);
-    }, true);
-
-    // Prevent Lenis from intercepting sidebar scrolling
-    var sidebarContent = document.getElementById('sidebar-content');
-    if (sidebarContent) sidebarContent.setAttribute('data-lenis-prevent', '');
-    var sidebar = document.getElementById('sidebar');
-    if (sidebar) sidebar.setAttribute('data-lenis-prevent', '');
-  }
-
-  // ─────────────────────────────────────────────
-  //  3. Scroll Progress Bar
+  //  2. Scroll Progress Bar
   // ─────────────────────────────────────────────
 
   function initProgressBar() {
@@ -142,7 +81,7 @@
   }
 
   // ─────────────────────────────────────────────
-  //  4. Back-to-Top Button
+  //  3. Back-to-Top Button
   // ─────────────────────────────────────────────
 
   function initBackToTop() {
@@ -158,11 +97,7 @@
       '</svg>';
 
     btn.addEventListener('click', function () {
-      if (window.__zfi_lenis) {
-        window.__zfi_lenis.scrollTo(0, { duration: 1.2 });
-      } else {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      }
+      window.scrollTo({ top: 0, behavior: 'auto' });
     });
 
     document.body.appendChild(btn);
@@ -183,7 +118,6 @@
     initSidebarToggle();
     initProgressBar();
     initBackToTop();
-    loadLenis();
   }
 
   if (document.readyState === 'loading') {

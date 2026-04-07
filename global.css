@@ -72,17 +72,8 @@ h2, h3, h4 {
   border-left-width: 3px;
 }
 
-/* Smooth scrolling — disabled when Lenis is active to avoid conflict */
+/* Use native browser scrolling behavior */
 html {
-  scroll-behavior: smooth;
-}
-
-html.lenis,
-html.lenis body {
-  scroll-behavior: auto;
-}
-
-html.lenis.lenis-smooth {
   scroll-behavior: auto;
 }
 
@@ -158,17 +149,6 @@ html.lenis.lenis-smooth {
   border-color: #667eea;
   box-shadow: 0 0 16px rgba(102, 126, 234, 0.3);
   transform: translateY(-2px);
-}
-
-/* ── Lenis overrides ────────────────────────── */
-
-html.lenis,
-html.lenis body {
-  height: auto;
-}
-
-.lenis.lenis-smooth [data-lenis-prevent] {
-  overscroll-behavior: contain;
 }
 
 /* ── Sidebar Toggle ─────────────────────────── */
