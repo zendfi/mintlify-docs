@@ -38,7 +38,13 @@ See [Authentication](/authentication) for details on key formats and management.
 
 ## Idempotency
 
-For write operations (`POST`, `PUT`, `PATCH`), you can include an `Idempotency-Key` header to ensure the request is processed exactly once. If a request with the same idempotency key is received again, the API returns the original response without re-processing.
+For write operations (`POST`, `PUT`, `PATCH`), include an `Idempotency-Key` header to make retries safe.
+
+- The key is scoped per merchant and endpoint.
+- Repeating the same key with the same request payload returns the original response.
+- Reusing the same key with a different payload returns `409` conflict.
+- If an identical request with the same key is still processing, the API can return `409` in-flight conflict (`idempotency_in_flight`).
+- Stored idempotency records expire after 24 hours.
 
 ```bash
 curl -X POST https://api.zendfi.tech/api/v1/payments \
@@ -49,6 +55,7 @@ curl -X POST https://api.zendfi.tech/api/v1/payments \
 ```
 
 The SDK generates idempotency keys automatically when `idempotencyEnabled` is `true` (the default).
+The CLI also sends idempotency keys for write requests and supports explicit keys on core payment/intent commands.
 
 ## Error Format
 
